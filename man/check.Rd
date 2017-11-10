@@ -2,25 +2,26 @@
 % Please edit documentation in R/check.R
 \name{check}
 \alias{check}
-\title{Perform a check of potential errors in a data frame}
+\title{Perform checks of potential errors in variable/dataset}
 \usage{
-check(v, nMax = Inf, ...)
+check(v, nMax = 10, checks = setChecks(), ...)
 }
 \arguments{
 \item{v}{the vector or the dataset (\code{data.frame}) to be checked.}
 
 \item{nMax}{If a check is supposed to identify problematic values,
 this argument controls if all of these should be pasted onto the outputted
-message, or if only the first \code{nMax} should be included. The default
-(\code{Inf}) prints all problematic values.}
+message, or if only the first \code{nMax} should be included. If set to \code{Inf}, 
+all problematic values are printed.}
+
+\item{checks}{A list of checks to use on each supported variable type. We recommend
+using \code{\link{setChecks}} for creating this list and refer to the documentation
+of this function for more details.}
 
 \item{\dots}{Other arguments that are passed on to the checking functions.
 These includes general parameters controlling how the check results are
 formatted (e.g. \code{maxDecimals}, which controls the number of decimals
-printed for numerical, problematic values), and also parameters that
-control what check functions are called for each variable type. The latter
-arguments all follow the template \code{[class]Checks}, see examples below
-for more details.}
+printed for numerical, problematic values).}
 }
 \value{
 If \code{v} is a variable, a list of objects of class
@@ -39,8 +40,9 @@ inputs.
 \details{
 It should be noted that the default options for each variable type
 are returned by calling e.g. \code{defaultCharacterChecks()},
-\code{defaultFactorChecks()}, \code{defaultNumericChecks()}, etc. Moreover,
-all available \code{checkFunction}s (including both locally defined
+\code{defaultFactorChecks()}, \code{defaultNumericChecks()}, etc. A complete 
+overview of all default options can be obtained by calling \code{setChecks()}. 
+Moreover, all available \code{checkFunction}s (including both locally defined
 functions and functions imported from \code{dataMaid} or other packages) can
 be viewed by calling \code{allCheckFunctions()}.
 }
@@ -53,24 +55,26 @@ check(x)
 y <- c(rnorm(100), rep(99, 10))
 check(y)
 
+#Check y for outliers and print 4 decimals for problematic variables
+check(y, checks = setChecks(numeric = "identifyOutliers"), maxDecimals = 4)
+
 #Change what checks are performed on a variable, now only identifyMissing is called
 # for numeric variables
-check(y, numericChecks = "identifyMissing")
+check(y, checks = setChecks(numeric = "identifyMissing"))
 
 #Check a full data.frame at once
 data(cars)
 check(cars)
 
 #Check a full data.frame at once, while changing the standard settings for
-#several data classes at once and including all decimals in problematic
-#values.
-#Here, we ommit the check of miscoded missing values for factors
-#and we only do this check for numeric variables.
-check(cars, factorChecks = setdiff(defaultFactorChecks(), "identifyMissing"),
-  numericChecks = "identifyMissing")
+#several data classes at once. Here, we ommit the check of miscoded missing values for factors
+#and we only do this check for numeric variables:
+check(cars, checks = setChecks(factor = defaultFactorChecks(remove = "identifyMissing"),
+  numeric = "identifyMissing"))
 
 }
 \seealso{
+\code{\link{setChecks}}, 
 \code{\link{allCheckFunctions}} \code{\link{checkResult}}
 \code{\link{checkFunction}}, \code{\link{defaultCharacterChecks}},
 \code{\link{defaultFactorChecks}}, \code{\link{defaultLabelledChecks}},

@@ -6,9 +6,9 @@
 #'
 #' @param v A character, labelled or factor variable to check.
 #'
-#' @param nMax The maximum number of problematic values to report.
-#'  Default is \code{Inf}, in which case all problematic values are
-#'  included in the outputted message.
+#' @param nMax The maximum number of problematic values to report. 
+#' Default is \code{10}. Set to \code{Inf} if all problematic values are to be included 
+#' in the outputted message, or to \code{0} for no output.
 #'
 #' @return  A \code{\link{checkResult}} with three entires:
 #' \code{$problem} (a logical indicating whether any whitespaces were
@@ -26,19 +26,19 @@
 #' @importFrom stats na.omit
 #' @importFrom utils tail
 #' @export
-identifyWhitespace <- function(v, nMax = Inf) UseMethod("identifyWhitespace")
+identifyWhitespace <- function(v, nMax = 10) UseMethod("identifyWhitespace")
 
 
 #add methods to generic identifyWhitespace function
 
 #'@export
-identifyWhitespace.character <- function(v, nMax = Inf) identifyWhitespaceC(v, nMax = nMax)
+identifyWhitespace.character <- function(v, nMax = 10) identifyWhitespaceC(v, nMax = nMax)
 
 #'@export
-identifyWhitespace.factor <- function(v, nMax = Inf) identifyWhitespaceF(v, nMax = nMax)
+identifyWhitespace.factor <- function(v, nMax = 10) identifyWhitespaceF(v, nMax = nMax)
 
 #'@export
-identifyWhitespace.labelled <- function(v, nMax = Inf) identifyWhitespaceL(v, nMax = nMax)
+identifyWhitespace.labelled <- function(v, nMax = 10) identifyWhitespaceL(v, nMax = nMax)
 
 
 #make it a checkFunction
@@ -48,7 +48,7 @@ identifyWhitespace <- checkFunction(identifyWhitespace, "Identify prefixed and s
 
 
 ##########################################Not exported below#########################################
-
+identifyWhitespaceMessage <- "The following values appear with prefixed or suffixed white space:"
 
 #character variables
 identifyWhitespaceC <- function(v, nMax) {
@@ -68,6 +68,7 @@ identifyWhitespaceC <- function(v, nMax) {
   }
   outMessage <- messageGenerator(list(problem=problem,
                                       problemValues=problemValues),
+                                 message = identifyWhitespaceMessage,
                                  nMax = nMax)
   checkResult(list(problem = problem, message = outMessage,
                    problemValues = problemValues))
@@ -80,8 +81,7 @@ identifyWhitespaceF <- function(v, nMax) {
 
 #labelled variables
 identifyWhitespaceL <- function(v, nMax) {
-  v <- na.omit(v)
-  v <- haven::as_factor(v)
+  v <- na.omit(haven::as_factor(v))
   identifyWhitespaceF(v, nMax = nMax)
 }
 

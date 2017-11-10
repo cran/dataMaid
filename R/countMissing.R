@@ -1,7 +1,7 @@
 #' Summary function for missing values
 #'
 #' A \code{\link{summaryFunction}}, intended to be called from
-#' \code{\link{summarize}} (and \code{\link{clean}}), which counts the
+#' \code{\link{summarize}} (and \code{\link{makeDataReport}}), which counts the
 #' number of missing (\code{NA}) values in a variable.
 #'
 #' @param v A variable (vector).
@@ -29,5 +29,5 @@ countMissing <- function(v, ...) {
 
 #' @include summaryFunction.R
 countMissing <- summaryFunction(countMissing,
-                                "Compute ratio of missing observations",
+                                "Compute proportion of missing observations",
                                 allClasses())

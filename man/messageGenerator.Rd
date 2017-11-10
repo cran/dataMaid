@@ -4,7 +4,9 @@
 \alias{messageGenerator}
 \title{Produce a message for the output of a checkFunction}
 \usage{
-messageGenerator(problemStatus, message = NULL, nMax = Inf)
+messageGenerator(problemStatus,
+  message = "Note that a check function found the following problematic values:",
+  nMax = 10)
 }
 \arguments{
 \item{problemStatus}{A list consisting of two entries:
@@ -33,15 +35,13 @@ Helper function for producing output messages for
 }
 \details{
 This function is a tool for building \code{\link{checkFunction}}s for the
-\code{dataMaid} \code{\link{clean}} function. \code{checkFunction}s will often identify a number
+\code{dataMaid} \code{\link{makeDataReport}} function. \code{checkFunction}s will often identify a number
 of values in a variable that are somehow problematic. \code{messageGenerator} takes
 these values, pastes them together with a problem description and makes sure that the
 formatting is appropriate for being rendered in a \code{rmarkdown} document.
 We recommend writing short and precise problem descriptions (see examples),
  but if no message is supplied, the following message is generated:
-"[function name] found the following problem values: [problem values]".
-Note that this option only works correctly when the \code{checkFunction} is
-called directly and e.g. not dispatched through a generic function.
+"Note that a check function found the following problematic values: [problem values]".
 }
 \examples{
 
@@ -65,6 +65,9 @@ identifyUnderscores <- function(v, nMax = Inf) {
 
  identifyUnderscores(noUSVar) #no problem
  identifyUnderscores(USVar) #problems
+ 
+#Only print the first two problemvalues in the message:
+ identifyUnderscores(USVar, nMax = 2)
 
 #Define same function, but without a manual problem description in
 #the messageGenerator-call:
@@ -82,10 +85,7 @@ identifyUnderscores <- function(v, nMax = Inf) {
  identifyUnderscores2(noUSVar) #no problem
  identifyUnderscores2(USVar) #problems
 
-#Only print the first two problemvalues in the message:
- identifyUnderscores2(USVar, nMax = 2)
-
 }
 \seealso{
-\code{\link{check}}, \code{\link{checkFunction}}, \code{\link{clean}}
+\code{\link{check}}, \code{\link{checkFunction}}, \code{\link{makeDataReport}}
 }

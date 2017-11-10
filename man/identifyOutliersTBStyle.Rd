@@ -4,13 +4,14 @@
 \alias{identifyOutliersTBStyle}
 \title{A checkFunction for identifying outliers Turkey Boxstole style}
 \usage{
-identifyOutliersTBStyle(v, nMax = Inf, maxDecimals = 2)
+identifyOutliersTBStyle(v, nMax = 10, maxDecimals = 2)
 }
 \arguments{
 \item{v}{A numeric, integer or Date variable to check.}
 
-\item{nMax}{The maximum number of problematic values to report. Default is \code{Inf}, in which case
-all problematic values are included in the outputted message.}
+\item{nMax}{The maximum number of problematic values to report. 
+Default is \code{10}. Set to \code{Inf} if all problematic values are to be included 
+in the outputted message, or to \code{0} for no output.}
 
 \item{maxDecimals}{A positive integer or \code{Inf}. Number of decimals used when
 printing numerical values in the data summary and in problematic values from the

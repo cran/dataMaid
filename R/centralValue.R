@@ -63,7 +63,9 @@ centralValue.Date <- function(v, ...) centralValueCF(v)
 
 
 #' @include summaryFunction.R 
-centralValue <- summaryFunction(centralValue, "Compute median or mode", allClasses())
+centralValue <- summaryFunction(centralValue, 
+                                "Compute median for numeric variables, mode for categorical variables", 
+                                allClasses())
 
 
 ##########################################Not exported below#########################################
@@ -75,7 +77,7 @@ centralValue <- summaryFunction(centralValue, "Compute median or mode", allClass
 centralValueB <- function(v) {
   vMode <- names(which.max(table(v, exclude=NULL)))[1]
   summaryResult(list(feature="Mode",
-                     result=paste("\"", vMode, "\"", sep=""),
+                     result=paste("\"", escapeRMDStyle(vMode), "\"", sep=""),
                      value = vMode))
 }
 
@@ -87,7 +89,7 @@ centralValueCF <- function(v) {
 
 #labelled variables
 centralValueL <- function(v) {
-  centralValueB(na.omit(v))
+  centralValueB(na.omit(haven::as_factor(v)))
 }
 
 #integer and numeric variables

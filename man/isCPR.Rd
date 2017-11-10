@@ -16,13 +16,13 @@ A \code{\link{checkResult}} with three entires:
 \code{$problem} (a logical indicating whether the variable consists
 of CPR numbers), \code{$message} (if a problem was found,
 the following message: "Warning: The variable seems to consist of
-Danish civil regristration (CPR) numbers.",
+Danish civil registration (CPR) numbers.",
 otherwise "") and \code{$problemValues} (always \code{NULL}).
 }
 \description{
 A \code{\link{checkFunction}} that checks if \code{v} consists exclusively
 of valid Danish civil registration (CPR) numbers, ignoring missing values. This
-function is intended for use as a precheck in \code{\link{clean}}, ensuring
+function is intended for use as a precheck in \code{\link{makeDataReport}}, ensuring
 that CPR numbers are not included in a \code{dataMaid} output document.
 }
 \examples{

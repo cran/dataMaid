@@ -1,4 +1,68 @@
-#' Exteneded example data to test the features of dataMaid
+#' Semi-artificial data about the US presidents
+#'
+#' A dataset with information about the first 45 US presidents as well as a 46th
+#' person, who is not a US president. The dataset was constructed to show the capabilities
+#' of \code{dataMaid} and therefore, it has been constructed to include errors and miscodings.
+#' Each observation in the dataset corresponds to a person. The dataset uses the 
+#' non-standard class \code{Name} which is simply an attribute that has been added to 
+#' two variables in order to show how \code{dataMaid} handles non-supported classes. 
+#'
+#' @format A data frame with 15 rows and 14 variables.
+#' \describe{
+#'    \item{lastName}{A \code{Name} type variable containing the last name of the president.}
+#'    \item{firstName}{A \code{Name} type variable containing the first name of the president.}
+#'    \item{orderOfPresidency}{A factor variable indicating the order of the presidents (with George Washington
+#'    as number 1 and Donald Trump as number 45).}
+#'    \item{birthday}{A Date variable with the birthday of the president}
+#'    \item{stateOfBirth}{A character variable with the state in which the president was born.}
+#'    \item{assassinationAttempt}{A numeric variable indicating whether there was an assassination 
+#'    attempt (\code{1}) or not (\code{0}) on the president.}
+#'    \item{sex}{A factor variable with the sex of the president.}
+#'    \item{ethnicity}{A factor variable with the ethnicity of the president.}
+#'    \item{presidencyYears}{A numeric variable with the duration of the presidency, in years.}
+#'    \item{ageAtInauguration}{A character variable with the age at inauguration.}
+#'    \item{favoriteNumber}{A \code{complex} type variable with a fictional favorite number for
+#'    each president.}
+#' }
+#' @source Artificial dataset constructed based on the US president dataset available from 
+#' \href{http://www.data-explorer.com/data}{Data Explorer}.
+#' @examples
+#' data(presidentData)
+#'
+"presidentData"
+
+
+#' Semi-artificial data about masterpieces of art
+#'
+#' A dataset with information about 200 painting and their painters.
+#' Each observation in the dataset corresponds to a painting. A single artificial variable, 
+#' namely an artist ID variable, has been included. Otherwise the information should 
+#' be truthful. 
+#'
+#' @format A data frame with 200 rows and 11 variables.
+#' \describe{
+#'    \item{ArtistID}{A unique ID used for cataloging the artists (fictional).}
+#'    \item{ArtistName}{The name of the artist.}
+#'    \item{NoOfMiddlenames}{The number of middlenames the artist has.}
+#'    \item{Title}{The title of the painting.}
+#'    \item{Year}{The approximate year in which the painting was made.}
+#'    \item{Location}{The current location of the painting.}
+#'    \item{Continent}{The continent of the current location of the painting.}
+#'    \item{Width}{The width of the painting, in centimeters.}
+#'    \item{Height}{The height of the painting, in centimers.}
+#'    \item{Media}{The media/materials of the painting.}
+#'    \item{Movement}{The artistic movement(s) the painting belongs to.}
+#'}
+#' @source Semi-artificial dataset constructed based on the Master Works of Art dataset available from 
+#' \href{http://www.data-explorer.com/data}{Data Explorer}.
+#' @examples
+#' data(artData)
+#'
+#' @importFrom htmltools includeHTML
+"artData"
+
+
+#' Extended example data to test the features of dataMaid
 #'
 #' A dataset of constructed data used as test bed when using \code{dataMaid} for identifying
 #' potential errors in a dataset.
@@ -39,18 +103,18 @@
 #'
 #' @format A \code{data.frame} with 15 rows and 6 variables.
 #' \describe{
-#'    \item{var1}{A factor variable with two levels (\code{"red"} and \code{"blue"}) and a few
-#'    (correctly coded)  missing observations.}
-#'    \item{var2}{A numeric variable with one obvious outlier value (\code{82}), two miscoded
-#'    missing values (\code{999} and \code{NaN}) and a few correctly coded missing values.}
-#'    \item{var3}{A factor variable where two of the levels (\code{"other"} and \code{"OTHER"}
+#'    \item{pill}{A factor variable with two levels (\code{"red"} and \code{"blue"}) and a few
+#'    (correctly coded) missing observations. This represents the colour of a pill.}
+#'    \item{events}{A numeric variable with one obvious outlier value (\code{82}), two miscoded
+#'    missing values (\code{999} and \code{NaN}) and a few correctly coded missing values. The number of previous events.}
+#'    \item{region}{A factor variable where two of the levels (\code{"other"} and \code{"OTHER"}
 #'    are the same word with different case settings. Moreover, the variable includes a Stata-style
-#'    miscoded missing value (\code{"."})}.
-#'    \item{var4}{A numeric variable (random draws from a standard normal distribution).}
-#'    \item{var5}{A factor variable with unique codes for each observation (a character string
+#'    miscoded missing value (\code{"."}). Used to represent geographical regions or treatment centers.}.
+#'    \item{change}{A numeric variable (random draws from a standard normal distribution). Representing a change in a measured variable.}
+#'    \item{id}{A factor variable with unique codes for each observation (a character string
 #'    with a number between 1 and 15), i.e. a key variable.}
-#'    \item{var6}{A factor variable that has the same level (\code{"Irrelevant"}) for all
-#'    observations, i.e. a empty variable.}
+#'    \item{spotifysong}{A factor variable that has the same level (\code{"Irrelevant"}) for all
+#'    observations, i.e. a empty variable. The latest song played on Spotify.}
 #' }
 #' @source Artificial data
 #' @examples
@@ -136,7 +200,7 @@
 #' identifyColons <- checkFunction(identifyColons,
 #'                                description = "Identify non-suffixed nor -prefixed colons",
 #'                                classes = c("character", "factor", "labelled"))
-#' clean(exampleData, replace = TRUE,
+#' makeDataReport(exampleData, replace = TRUE,
 #'       preChecks = c("isKey", "isEmpty", "isID"),
 #'       allVisuals = "mosaicVisual",
 #'       characterSummaries = c(defaultCharacterSummaries(), "countZeros"),

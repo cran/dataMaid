@@ -2,7 +2,7 @@
 #'
 #' @description A \code{\link{checkFunction}} that checks if \code{v} consists exclusively
 #' of valid Danish civil registration (CPR) numbers, ignoring missing values. This
-#' function is intended for use as a precheck in \code{\link{clean}}, ensuring
+#' function is intended for use as a precheck in \code{\link{makeDataReport}}, ensuring
 #' that CPR numbers are not included in a \code{dataMaid} output document.
 #'
 #' @param v A variable (vector) to check. This variable is allowed to have any class.
@@ -13,7 +13,7 @@
 #' \code{$problem} (a logical indicating whether the variable consists
 #' of CPR numbers), \code{$message} (if a problem was found,
 #' the following message: "Warning: The variable seems to consist of
-#' Danish civil regristration (CPR) numbers.",
+#' Danish civil registration (CPR) numbers.",
 #' otherwise "") and \code{$problemValues} (always \code{NULL}).
 #'
 #' @examples
@@ -36,10 +36,14 @@
 #' \code{\link{checkFunction}}, \code{\link{checkResult}}
 #'
 #' @importFrom stats na.omit
+#' @importFrom haven as_factor
 #' @export
 isCPR <- function(v, ...) { #Note: Implementation works until the year 2036...
   out <- list(problem=FALSE, message="", problemValues = NULL)
   m <- "Warning: The variable seems to consist of Danish civil regristration (CPR) numbers."
+  
+  if ("labelled" %in% class(v)) v <- haven::as_factor(v)
+  
   v <- as.character(na.omit(v))
   if (length(v) == 0) return(checkResult(out)) #if v consists only of NAs
   posCPR <- FALSE

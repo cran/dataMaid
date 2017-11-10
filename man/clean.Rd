@@ -2,12 +2,12 @@
 % Please edit documentation in R/clean.R
 \name{clean}
 \alias{clean}
-\title{Produce a data cleaning overview document}
+\title{Produce a data cleaning overview document (deprecated version)}
 \usage{
 clean(data, output = c("pdf", "html"), render = TRUE, useVar = NULL,
   ordering = c("asIs", "alphabetical"), onlyProblematic = FALSE,
-  labelled_as = c("factor", "NA", "zap"), mode = c("summarize", "visualize",
-  "check"), smartNum = TRUE, preChecks = c("isKey", "isEmpty"),
+  labelled_as = c("factor"), mode = c("summarize", "visualize", "check"),
+  smartNum = TRUE, preChecks = c("isKey", "isSingular", "isSupported"),
   file = NULL, replace = FALSE, vol = "", standAlone = TRUE,
   twoCol = TRUE, quiet = TRUE, openResult = TRUE,
   characterChecks = defaultCharacterChecks(),
@@ -23,8 +23,9 @@ clean(data, output = c("pdf", "html"), render = TRUE, useVar = NULL,
   integerSummaries = defaultIntegerSummaries(),
   logicalSummaries = defaultLogicalSummaries(),
   dateSummaries = defaultDateSummaries(), allSummaries = NULL,
-  allVisuals = "standardVisual", listChecks = TRUE, maxProbVals = Inf,
-  maxDecimals = 2, ...)
+  allVisuals = "standardVisual", listChecks = TRUE, maxProbVals = 10,
+  maxDecimals = 2, addSummaryTable = TRUE, reportTitle = NULL,
+  treatXasY = NULL, ...)
 }
 \arguments{
 \item{data}{The dataset to be checked. This dataset should be of class \code{data.frame},
@@ -47,8 +48,10 @@ are "asIs" (ordering as in the dataset) and "alphabetical" (alphabetical order).
 problematic in the check step will be included in the variable list.}
 
 \item{labelled_as}{A string explaining the way to handle labelled vectors.
-Currently \code{"factor"} (the default) is the only possibility and the argument
-is not currently in use.}
+Currently \code{"factor"} (the default) is the only possibility. This means that labelled
+variables that appear factor-like (by having a non-\code{NULL} \code{labels}-attribute) will
+be treated as factors, while other labelled variables will be treated as whatever base
+variable class they inherit from.}
 
 \item{mode}{Vector of tasks to perform among the three categories "summarize", "visualize" and "check".
 The default, \code{c("summarize", "visualize", "check")}, implies that all three steps are
@@ -162,12 +165,27 @@ creating the plots for each variable in the "visualize" step. The default,
 possible variable type are summarized in the output. Defaults to \code{TRUE}.}
 
 \item{maxProbVals}{A positive integer or \code{Inf}. Maximum number of unique
-values printed from check-functions. Defaults to \code{Inf}, which means
-that all problematic values are printed.}
+values printed from check-functions. In the case of \code{Inf}, all problematic 
+values are printed. Defaults to \code{10}.}
 
 \item{maxDecimals}{A positive integer or \code{Inf}. Number of decimals used when
 printing numerical values in the data summary and in problematic values from the
 data checks. If \code{Inf}, no rounding is performed.}
+
+\item{addSummaryTable}{A logical. If \code{TRUE} (the default), a summary table
+of the variable checks is added between the Data Cleaning Summary and the
+Variable List.}
+
+\item{reportTitle}{A text string. If supplied, this will be the printed title of the
+report. If left unspecified, the title with the name of the supplied dataset.}
+
+\item{treatXasY}{A list that indicates how non-standard variable classes should be treated.
+This parameter allows you to include variables that are not of class \code{factor}, \code{character}, 
+\code{labelled}, \code{numeric}, \code{integer}, \code{logical} nor \code{Date} (or a class
+that inherits from any of these classes). The names of the list are the new classes and the entries
+are the names of the class, they should be treated as. If \code{clean()} should e.g. treat variables of 
+class \code{raw} as characters and variables of class \code{complex} as numeric, you should put
+\code{treatXasY = list(raw = "character", complex = "numeric")}.}
 
 \item{\dots}{FIX ME-------- Other arguments that are passed on the to precheck,
 checking, summary and visualization functions.WHAT ARGUMENTS ARE RELEVANT TO MENTION
@@ -178,6 +196,10 @@ The function does not return anything. Its side effect (the production
 of a data cleaning overview document) is the reason for running the function.
 }
 \description{
+NOTE: This function has been replaced by \code{\link{makeDataReport}}. The current 
+function is no longer updated and it is only included for backwards compatability.
+}
+\details{
 Run a set of class-specific validation checks to check the
 variables in a dataset for potential errors.  Performs checking
 steps according to user input and/or data type of the inputted
@@ -185,8 +207,7 @@ variable.  The checks are saved to an R markdown file which can
 rendered into an easy-to-read document.  This document also
 includes summaries and visualizations of each variable in the
 dataset.
-}
-\details{
+
 For each variable, a set of pre-check (controlled by the
 \code{preChecks} argument) is first run and then then a battery of
 functions are applied depending on the variable class.  For each
@@ -238,6 +259,16 @@ wheresWally <- checkFunction(wheresWally,
 # Add the newly defined function to the list of checks used for characters.
 clean(testData, characterChecks=c(defaultCharacterChecks(), "wheresWally"),
       replace=TRUE)
+}
+
+#Handle non-supported variable classes using treatXasY: treat raw as character and
+#treat complex as numeric. We also add a list variable, but as lists are not 
+#handled through treatXasY, this variable will be caught in the preChecks and skipped:
+\dontrun{
+toyData$rawVar <- as.raw(c(1:14, 1))
+toyData$compVar <- c(1:14, 1) + 2i
+toyData$listVar <- as.list(c(1:14, 1))
+clean(toyData, replace  = TRUE, treatXasY = list(raw = "character", complex = "numeric"))
 }
 
 }

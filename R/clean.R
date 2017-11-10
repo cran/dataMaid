@@ -1,5 +1,8 @@
-#' Produce a data cleaning overview document
+#' Produce a data cleaning overview document (deprecated version)
 #'
+#' NOTE: This function has been replaced by \code{\link{makeDataReport}}. The current 
+#' function is no longer updated and it is only included for backwards compatability. 
+#' 
 #' Run a set of class-specific validation checks to check the
 #' variables in a dataset for potential errors.  Performs checking
 #' steps according to user input and/or data type of the inputted
@@ -35,8 +38,11 @@
 #' problematic in the check step will be included in the variable list.
 #'
 #' @param labelled_as A string explaining the way to handle labelled vectors.
-#' Currently \code{"factor"} (the default) is the only possibility and the argument
-#' is not currently in use.
+#' Currently \code{"factor"} (the default) is the only possibility. This means that labelled
+#' variables that appear factor-like (by having a non-\code{NULL} \code{labels}-attribute) will
+#' be treated as factors, while other labelled variables will be treated as whatever base
+#' variable class they inherit from.
+#'
 #'
 #' @param mode Vector of tasks to perform among the three categories "summarize", "visualize" and "check".
 #' The default, \code{c("summarize", "visualize", "check")}, implies that all three steps are
@@ -150,12 +156,27 @@
 #' possible variable type are summarized in the output. Defaults to \code{TRUE}.
 #'
 #' @param maxProbVals A positive integer or \code{Inf}. Maximum number of unique
-#' values printed from check-functions. Defaults to \code{Inf}, which means
-#' that all problematic values are printed.
+#' values printed from check-functions. In the case of \code{Inf}, all problematic 
+#' values are printed. Defaults to \code{10}.
 #'
 #' @param maxDecimals A positive integer or \code{Inf}. Number of decimals used when
 #' printing numerical values in the data summary and in problematic values from the
 #' data checks. If \code{Inf}, no rounding is performed.
+#'
+#' @param addSummaryTable A logical. If \code{TRUE} (the default), a summary table
+#' of the variable checks is added between the Data Cleaning Summary and the
+#' Variable List.
+#'
+#' @param reportTitle A text string. If supplied, this will be the printed title of the
+#' report. If left unspecified, the title with the name of the supplied dataset.
+#'
+#' @param treatXasY A list that indicates how non-standard variable classes should be treated.
+#' This parameter allows you to include variables that are not of class \code{factor}, \code{character}, 
+#' \code{labelled}, \code{numeric}, \code{integer}, \code{logical} nor \code{Date} (or a class
+#' that inherits from any of these classes). The names of the list are the new classes and the entries
+#' are the names of the class, they should be treated as. If \code{clean()} should e.g. treat variables of 
+#' class \code{raw} as characters and variables of class \code{complex} as numeric, you should put
+#' \code{treatXasY = list(raw = "character", complex = "numeric")}.
 #'
 #' @param \dots FIX ME-------- Other arguments that are passed on the to precheck,
 #' checking, summary and visualization functions.WHAT ARGUMENTS ARE RELEVANT TO MENTION
@@ -210,17 +231,28 @@
 #' clean(testData, characterChecks=c(defaultCharacterChecks(), "wheresWally"),
 #'       replace=TRUE)
 #' }
+#' 
+#' #Handle non-supported variable classes using treatXasY: treat raw as character and
+#' #treat complex as numeric. We also add a list variable, but as lists are not 
+#' #handled through treatXasY, this variable will be caught in the preChecks and skipped:
+#' \dontrun{
+#' toyData$rawVar <- as.raw(c(1:14, 1))
+#' toyData$compVar <- c(1:14, 1) + 2i
+#' toyData$listVar <- as.list(c(1:14, 1))
+#' clean(toyData, replace  = TRUE, treatXasY = list(raw = "character", complex = "numeric"))
+#' }
 #'
 #' @importFrom methods is
 #' @importFrom pander pander_return panderOptions pandoc.table.return
 #' @importFrom tools file_ext
-#' @importFrom utils packageVersion
+#' @importFrom utils packageVersion sessionInfo capture.output packageDescription
+#' @importFrom magrittr %>%
 #' @export
 clean <- function(data, output=c("pdf", "html"), render=TRUE,
                   useVar=NULL, ordering=c("asIs", "alphabetical"), onlyProblematic=FALSE,
-                  labelled_as=c("factor", "NA", "zap"),
+                  labelled_as=c("factor"),
                   mode=c("summarize", "visualize", "check"),
-                  smartNum=TRUE, preChecks=c("isKey", "isEmpty"),
+                  smartNum=TRUE, preChecks=c("isKey", "isSingular", "isSupported"),
                   file=NULL, replace=FALSE, vol="",
                   standAlone=TRUE, twoCol=TRUE,
                   quiet = TRUE,
@@ -243,9 +275,22 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
                   allSummaries = NULL,
                   allVisuals = "standardVisual",
                   listChecks = TRUE,
-                  maxProbVals = Inf,
+                  maxProbVals = 10,
                   maxDecimals = 2,
+                  addSummaryTable = TRUE,
+                  reportTitle = NULL,
+                  treatXasY = NULL,
                   ...) {
+
+    .Deprecated("makeDataReport")
+##    warning(paste("Please note that clean() has been replaced by makeDataReport().",
+##                 "This means that clean() is no longer maintained,",
+##                  "and we therefore recommend all users to use makeDataReport() instead.",
+##                 "This function will be removed from the package in the future."))
+  
+    ## Store the original call
+    orig.call <- match.call()
+
     ## Start by doing a few sanity checks of the input
     if (! (is(data, "data.frame") )) {
         ## tibble is automatically a data frame
@@ -254,6 +299,29 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
         } else stop("clean requires a data.frame, tibble or matrix as input")
     }
 
+    #Check treatXasY argument
+      ## Supported variable classes 
+      allClasses <- c("character", "factor", "labelled", "numeric", "integer", 
+                      "logical", "Date")
+      if (!is.null(treatXasY)) {
+        if (!is.list(treatXasY)) {
+          warning("The supplied treatXasY argument was invalid and therefore, it was ignored.")
+          treatXasY <- NULL
+        } else if (!all(unlist(treatXasY) %in% allClasses)) {
+          probPl <- !(unlist(treatXasY) %in% allClasses)
+          warning(paste("The treatXasY argument specified for: ",
+                        paste(names(treatXasY)[probPl], 
+                              "variables to be treated as",
+                              unlist(treatXasY[probPl]), 
+                                     collapse =", "),
+                        ". But the right hand side classes ",
+                        "are not supported by dataMaid and therefore ",
+                        "entries of treatXasY are ignored.", sep = ""))
+          treatXasY[probPl] <- NULL
+        }
+      }
+      
+      
     #handle quiet argument
     if (identical(quiet, "silent")) {
       silent <- TRUE
@@ -275,15 +343,28 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
     ## Extract the dataframe name
     dfname <- deparse(substitute(data))
 
+    the_lhs <- function() {
+        parents <- lapply(sys.frames(), parent.env)
+
+        is_magrittr_env <- vapply(parents, identical, logical(1), y = environment(`%>%`))
+        
+        if (any(is_magrittr_env)) {
+            deparse(get("lhs", sys.frames()[[max(which(is_magrittr_env))]]))
+        }
+    }
+
+
+    ## Now if data are added as part of a magrittr pipe then use this "fix"
+    if (dfname==".") {
+        dfname <- the_lhs()
+    }
+  
     #If standAlone is FALSE, the document obviously shouldn't be rendered
     if (!standAlone) render <- FALSE
 
     ##########################################################################################
     #######Secret arguments that were removed for the users but are still implemented#########
     ##########################################################################################
-
-    #If we would ever want to allow users not to append the dataMaid stamp:
-    brag <- TRUE
 
     #If we would ever want (Windows) users not to be nagged
     nagUser <- TRUE
@@ -374,20 +455,10 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
                   #outFile is the file we might want to open at the end. Should be consistent
                   #with the user's choice of output (NOT just .rmd).
 
-    ## The name of the R markdown file that is output
-    #outFile <- paste0(substring(file, 1, nchar(file)-4), ".Rmd")
-
-
-
-################################################################################################
-###ALSO: check that vol and file and dataname produces a valid file name (no strange characters)
-################################################################################################
-
+    ## check if we are about to overwrite a file
     fileExists <- file.exists(file)
     outFileExists <- file.exists(outFile)
 
-
-    ## check if we are about to overwrite a file
       #if (!replace %in% c("never", "onlyCleanR") && (fileExists || outFileExists)) {
     if (replace) {
         unlink(file)
@@ -404,6 +475,27 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
                    "- check that you do not want to keep the original file and if so,",
                    "use clean() with argument replace = TRUE"))
     }
+
+    #Check if [fileName]_vListTmp.txt already exists and if so, try to
+    #make a different temporary file for writing variable results to
+    OK <- FALSE
+    maxTries <- 101
+    i <- 1
+    addOns <- c("", 1:100)
+    vListFileName <- paste(substring(file, 1, nchar(file)-4),
+                           "_vListTmp", sep = "")
+    while (!OK & i <= maxTries) {
+      OK <- !file.exists(paste(vListFileName, addOns[i], ".txt", sep = ""))
+      i <- i + 1
+    }
+    if (!OK) {
+      stop(paste("No unused file names were available for producing a",
+                 "temporary file for clean(). Please clean up your",
+                 "working directory for files starting with",
+                 vListFileName, "and try again."))
+    } else vListFileName <- paste(vListFileName, addOns[i-1], ".txt", sep = "")
+
+
 
       #if (replace=="onlyCleanR") {
       #  fileProblem <- F
@@ -463,10 +555,6 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
       numericSummaries <- integerSummaries <- logicalSummaries <- allSummaries
     }
 
-
-
-
-
    # if (!(output %in% c("html", "pdf"))) twoCol <- FALSE
     #what is this line supposed to do and when will it happen?
 
@@ -478,6 +566,9 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
     pander::panderOptions("table.split.cells", Inf)
     pander::panderOptions('table.alignment.rownames', 'left')
 
+    changedPanderOptions <- c("table.alignment.default", "table.split.table",
+                              "table.split.cells", "table.alignment.rownames")
+
     ##
     ## Below comes a bunch of helper functions for writing the output
     ##
@@ -486,9 +577,11 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
     }
 
     chunk.wrapper <- function(x, ..., outfile=fileConn, options=c("echo=FALSE", "warning=FALSE"), label=NULL) {
-        writer(paste0("```{r ", ifelse(is.null(label), ", ", paste0(label, ", ")), paste0(options, collapse=", "), "}"))
-        writer(x, ..., outfile=outfile)
-        writer("```")
+        writer(paste0("```{r ", ifelse(is.null(label), ", ", paste0(label, ", ")),
+                      paste0(options, collapse=", "), "}"),
+               outfile = outfile)
+        writer(x, ..., outfile = outfile)
+        writer("```", outfile = outfile)
     }
 
     fig.wrapper <- function(x, ..., outfile=fileConn, options=c("echo=FALSE", "fig.width=4",
@@ -508,29 +601,34 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
     twoCols.wrapper <- function(text, figure, outfile=fileConn, outputty=output, label=NULL) {
         if (outputty=="pdf") { #note: does NOT work if there is a linebreak between the two
                                         #minipage environments!
-            writer("\\bminione")
-            writer(text)
-            writer("\\emini")
-            writer("\\bminitwo")
-            fig.wrapper(figure, label=label)
-            writer("\\emini")
+            writer("\\bminione", outfile = outfile)
+            writer(text, outfile = outfile)
+            writer("\\emini", outfile = outfile)
+            writer("\\bminitwo", outfile = outfile)
+            fig.wrapper(figure, label=label, outfile = outfile)
+            writer("\\emini", outfile = outfile)
         }
         if (outputty=="html") {
-            writer("<div class = \"row\">")
-            writer("<div class = \"col-lg-8\">")
-            writer(text)
-            writer("</div>")
-            writer("<div class = \"col-lg-4\">")
-            fig.wrapper(figure, label=label)
-            writer("</div>")
-            writer("</div>")
+            writer("<div class = \"row\">", outfile = outfile)
+            writer("<div class = \"col-lg-8\">", outfile = outfile)
+            writer(text, outfile = outfile)
+            writer("</div>", outfile = outfile)
+            writer("<div class = \"col-lg-4\">", outfile = outfile)
+            fig.wrapper(figure, label=label, outfile = outfile)
+            writer("</div>", outfile = outfile)
+            writer("</div>", outfile = outfile)
         }
-        writer("\n")
+        writer("\n", outfile = outfile)
     }
 
 
-    ## Opne file connection
-    fileConn <- file(file, "w")
+    ## Open file connections
+    fileConn <- file(file, "w") #for main document
+    vListConn <- file(vListFileName, "w")
+
+    ## Title of the report
+    if (is.null(reportTitle)) reportTitle <- dfname
+
 
     ## This part is wrapped in a try call to ensure that the connection is closed even if something
     ## breaks down when running the code.
@@ -540,9 +638,9 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
     writer("---")
     writer("dataMaid: yes")
     if (standAlone) {
-        writer(paste("title:", dfname))
+        writer(paste("title:", reportTitle))
         writer("subtitle: \"Autogenerated data summary from dataMaid\"")
-        writer("date: \"`r Sys.Date()`\"")
+        writer("date: \"`r Sys.time()`\"")
         if (output=="pdf") {
             writer("output: pdf_document")
             writer("documentclass: report")
@@ -614,7 +712,7 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
      checkMat <- matrix("", length(everyCheck), 7, #6: number of different variable types
                         dimnames=list(everyCheck, c("character", "factor", "labelled",
                                                    "numeric", "integer", "logical", "Date")))
-     y <- "$\\times$"
+     y <- ifelse(output == "pdf", "$\\times$", "&times;")
      checkMat[characterChecks, "character"] <- y
      checkMat[factorChecks, "factor"] <- y
      checkMat[labelledChecks, "labelled"] <- y
@@ -636,28 +734,80 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
                    maxDecimals, "decimals."))
       writer("\n")
     }
-   }
+ }
 
+
+    ## This part is wrapped in a try call to ensure that the connection is closed even if something
+    ## breaks down when running the code.
+   try({
+
+       ## allRes contains the summary table
+       allRes <- data.frame(variable = vnames[index],
+                            name = rep(NA, nvariables),
+                            vClass = rep(NA, nvariables),
+                            distinctVals = rep(NA, nvariables),
+                            missingPct = rep(NA, nvariables),
+                            problems = rep("", nvariables),
+                            stringsAsFactors = FALSE)
 
     ## List of variables
-    writer("# Variable list")
+    writer("# Variable list", outfile = vListConn)
+    
+   
 
     for (idx in index) {
+        
+        #Initialize variables
         extraMessages <- list(do=FALSE, messages=NULL)
         skip <- FALSE
         problems <- FALSE
+        preCheckProblems <- FALSE
 
-        ## How to order the variables
+        ## Choose variable
         v <- data[[idx]]
         vnam <- vnames[idx]
+        
+      #  browser()
 
         ## Check if variable is key/empty
         preCheckRes <- lapply(preChecks, function(x) eval(call(x, v)))
         preCheckProblems <- sapply(preCheckRes, function(x) x$problem)
         preCheckMessages <- sapply(preCheckRes, function(x) x$message)
+        
+        ## Deal with non-supported classes whose handling is 
+        ## specified in treatXasY
+        userSuppVar <- FALSE
+        if ("isSupported" %in% preChecks && 
+            preCheckProblems[which(preChecks == "isSupported")] &&  
+            !is.null(treatXasY)) {
+          vClasses <- class(v)
+          firstUSClass <- vClasses[vClasses %in% names(treatXasY)][1]
+          if (!is.na(firstUSClass)) {
+            attr(v, "orginalClass") <- vClasses[1]
+            class(v) <- treatXasY[[firstUSClass]]
+            preCheckProblems[which(preChecks == "isSupported")] <- FALSE
+            preCheckMessages[which(preChecks == "isSupported")] <- ""
+            userSuppVar <- TRUE
+          }
+        }
+
+        ## Deal with labelled variables: If they don't have any labels and
+        ## they inherit from a base class, treat them as that base class
+        if (labelled_as == "factor" & !userSuppVar) {
+          v <- doCheckLabs(v)
+          if ("fakeLabelled" %in% class(v)) {
+            extraMessages$do <- TRUE
+            extraMessages$messages <- c(extraMessages$messages,
+                                        paste("Note that this variable is treated as a",
+                                        class(v)[2],
+                                        "variable below, rather than a labelled variable,",
+                                        "as it contains no label information."))
+          }
+        }
 
         ## use smartNum
-        if (smartNum & any(class(v) %in% c("numeric", "integer"))) {
+        if (smartNum & !("fakeLabelled" %in% class(v)) & !userSuppVar & 
+            any(class(v) %in% c("numeric", "integer"))) {
             v <- doSmartNum(v, ...)
             if ("smartNum" %in% class(v)) {
                 extraMessages$do <- TRUE
@@ -665,6 +815,8 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
                                             "Note that this variable is treated as a factor variable below, as it only takes a few unique values.")
             }
         }
+
+
 
         ## Make checks
         if (doCheck && !any(preCheckProblems)) {
@@ -681,31 +833,46 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
           problems <- sapply(checkRes, function(x) x[[1]]) #maybe change to index by name?
         }
 
+        #Update problem status in results overview
+        if (any(c(problems, preCheckProblems)))  {
+          allRes$problems[allRes$variable == vnam] <- y
+        }
+
         ## skip non problem-causing variables
         if (onlyProblematic && (!any(preCheckProblems) && !any(problems))) skip <- TRUE
 
         ## Now print out the information if the variable isn't skipped
         if (!skip) {
-
-            ## Variable name
+             ## Variable name
             printable_name <- gsub("_", "\\\\_", vnam)
-            writer("## **", printable_name, "**\n")
+                  #writer("## **", printable_name, "**\n", outfile = vListConn)
+            writer("## ", printable_name, "\n", outfile = vListConn) #** makes linking complicated
 
+            #Fill out name, vClass and missingPct entries in the results overview
+            allRes$name[allRes$variable == vnam] <- paste("[", printable_name, "]", sep = "")
+            allRes$vClass[allRes$variable == vnam] <- oClass(v)[1]
+            allRes$missingPct[allRes$variable == vnam] <- paste(format(round(100*mean(is.na(v)),2),
+                                                                       nsmall = 2), "%")
+            allRes$distinctVals[allRes$variable == vnam] <- length(unique(v))
+            
             ## If the variable has label information the print that below
             if ("label" %in% attributes(v)$names)
-                writer("*",attr(v, "label"), "*\n")  # Write label
+                writer("*",attr(v, "label"), "*\n", outfile = vListConn)  # Write label
 
             ## write result of key/empty check
             if (any(preCheckProblems)) {
-                writer(paste("* ", preCheckMessages[preCheckProblems], "\n", collapse=" \n ", sep=""))
+                writer(paste("* ", preCheckMessages[preCheckProblems], "\n", collapse=" \n ", sep=""),
+                       outfile = vListConn)
             } else {
 
               ## write extra messages if any
               if (extraMessages$do) writer(paste("* ", extraMessages$messages, "\n", collapse=" \n ",
-                                                 sep=""))
+                                                 sep=""),
+                                           outfile = vListConn)
 
               ## make Summary table
               if (doSummarize) sumTable <- pander::pander_return(summarize(v,
+                                                                 reportstyleOutput = TRUE,
                                                                  characterSummaries = characterSummaries,
                                                                  factorSummaries = factorSummaries,
                                                                  labelledSummaries = labelledSummaries,
@@ -731,10 +898,10 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
 
               ## add visualization + summary results to output file
               if (twoCol) {
-                twoCols.wrapper(sumTable, visual, label=chunk_name)
+                twoCols.wrapper(sumTable, visual, label=chunk_name, outfile = vListConn)
               } else {
-                if (doSummarize) writer(sumTable)
-                if (doVisualize) fig.wrapper(visual, label=chunk_name)
+                if (doSummarize) writer(sumTable, outfile = vListConn)
+                if (doVisualize) fig.wrapper(visual, label=chunk_name, outfile = vListConn)
                 writer("\n")
               }
 
@@ -744,7 +911,7 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
                   #browser()
                   messages <- sapply(checkRes, function(x) x[[2]])[problems] #maybe index by name instead?
                   for (i in 1:length(messages)) {
-                    writer(paste0("- ", messages[i], " \n"))
+                    writer(paste0("- ", messages[i], " \n"), outfile = vListConn)
 
                     ###Why did we use to have this line here? Do we need pander stuff ever?###
                     #writer(paste0("- ", pander::pander_return(messages[i])))
@@ -754,9 +921,9 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
               }
             }
 
-            writer("\n")
-            if (output=="html") writer("---\n")
-            if (output=="pdf") writer("\\fullline\n")
+            writer("\n", outfile = vListConn)
+            if (output=="html") writer("---\n", outfile = vListConn)
+            if (output=="pdf") writer("\\fullline\n", outfile = vListConn)
 
             ## Add garbage collection. Should help with memory problems.
             ## Removed for now
@@ -764,13 +931,139 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
         }
 
     }
+   }) #end inner try (vListConn)
+
+    #Close VarList file
+    flush(vListConn)
+    close(vListConn)
+
+    #Add variable summary table
+   if (addSummaryTable) {
+      writer("# Summary table")
+
+      #remove skipped variabled (e.g. due to onlyProblematic = TRUE) and
+      #drop variable with original variable names (not formatted for printing)
+      allRes <- na.omit(allRes)[, -1]
+      rownames(allRes) <- 1:nrow(allRes) #note: necessary, as pander prints
+                                         #non-trivial row names as a column
+                                         #and data.frame subsetting creates
+                                         #rownames like c(1, 2, 4, 5, 9)...
+
+      #Add names used for printing
+      names(allRes) <- c("", "Variable class", "# unique values", "Missing observations",
+                         "Any problems?")
+
+      writer(pander::pandoc.table.return(allRes, justify="llrrc"))
+      writer("\n")
+    }
+
+
+
+    #Write variable list file into parent .Rmd file and delete the temporary file afterwards
+    writer(scan(vListFileName, what = "character", sep = "\n",
+                blank.lines.skip = FALSE, quiet = TRUE))
+    unlink(vListFileName)
+
 
     ## This could be wrapped in a tryCatch for those rather weird situations where the package is not installed.
-    ## But it is indeed rather obscure
-    if (brag) {
-    writer("This report was created by dataMaid v", paste(packageVersion("dataMaid"), sep="."), ".")
+    ## But it is indeed rather obscure.
+
+    ## Misc meta information
+    writer("\n")
+    
+    writer("Report generation information:\n")
+    writer(" *  Created by ", whoami::fullname() , ".\n")
+    writer(" *  Report creation time: ", format(Sys.time(), "%a %b %d %Y %H:%M:%S"),"\n")
+
+    ## Part of this was lifted from devtools
+
+    getdate <- function (desc) {
+      if (!is.null(desc$`Date/Publication`)) {
+          date <- desc$`Date/Publication`
+      }
+      else if (!is.null(desc$Built)) {
+          built <- strsplit(desc$Built, "; ")[[1]]
+          date <- built[3]
+      }
+      else {
+          date <- NA_character_
+      }
+      as.character(as.Date(strptime(date, "%Y-%m-%d")))
     }
-    ## Now we should not write anything more to the file
+    getpkgsource <- function(desc) {
+    if (!is.null(desc$GithubSHA1)) {
+        str <- paste0("Github (", desc$GithubUsername, "/", desc$GithubRepo, 
+            "@", substr(desc$GithubSHA1, 1, 7), ")")
+    }
+    else if (!is.null(desc$RemoteType)) {
+        remote_type <- desc$RemoteType
+        if (!is.null(desc$RemoteUsername) && (!is.null(desc$RemoteRepo))) {
+            user_repo <- paste0(desc$RemoteUsername, "/", desc$RemoteRepo)
+        }
+        else {
+            user_repo <- NULL
+        }
+        if (!is.null(desc$RemoteSha)) {
+            sha <- paste0("@", substr(desc$RemoteSha, 1, 7))
+        }
+        else {
+            sha <- NULL
+        }
+        if (!is.null(user_repo) || !is.null(sha)) {
+            user_repo_and_sha <- paste0(" (", user_repo, sha, 
+                ")")
+        }
+        else {
+            user_repo_and_sha <- NULL
+        }
+        str <- paste0(remote_type, user_repo_and_sha)
+    }
+    else if (!is.null(desc$Repository)) {
+        repo <- desc$Repository
+        if (!is.null(desc$Built)) {
+            built <- strsplit(desc$Built, "; ")[[1]]
+            ver <- sub("$R ", "", built[1])
+            repo <- paste0(repo, " (", ver, ")")
+        }
+        repo
+    }
+    else if (!is.null(desc$biocViews)) {
+        "Bioconductor"
+    }
+    else {
+        "local"
+    }
+}    
+        
+    
+    desc <- lapply("dataMaid", packageDescription, lib.loc = NULL)
+    version <- vapply(desc, function(x) x$Version, character(1))
+    pkgdate <- vapply(desc, getdate, character(1))
+    pkgsource <- vapply(desc, getpkgsource, character(1))
+    
+    writer(" *  dataMaid v", version, " [Pkg: ", pkgdate, " from ", pkgsource, "]\n")
+    sessioninfo <- sessionInfo()
+    writer(" *  ", sessioninfo[[1]]$version.string, ".\n")
+    writer(" *  Platform: ", sessioninfo[[2]], "(", sessioninfo[[4]], ").\n")
+    writer(" *  Function call: `", capture.output(orig.call), "`\n")
+    
+
+    }) ## Now we should not write anything more to the file - End try.
+       ## Maybe include the rest of the steps in the try? As of now, we render and open
+       ## files with no contents if mistakes were found along the way...
+
+    ## Force flush and close connection
+    flush(fileConn)
+    close(fileConn)
+
+
+    #Make panderOptions as they were
+    for(i in 1:length(changedPanderOptions)) {
+      optName <- changedPanderOptions[i]
+      panderOptions(optName, oldPanderOptions[[optName]])
+    }
+
+
 
     if (output %in% c("html", "pdf") && render) {
       ##is it possible to close the file clean_data.pdf/html if it is open such
@@ -792,10 +1085,6 @@ clean <- function(data, output=c("pdf", "html"), render=TRUE,
     ##    unlink(file) #delete rmd
     ## }
 
-    }) ## End try
-    ## Force flush and close connection
-    flush(fileConn)
-    close(fileConn)
 
 
     if (!quiet) { #whoops - version 1 only makes sense for windows, doesn't it?
@@ -857,6 +1146,20 @@ normalizeFileName <- function(fileName, replaceChar = "_") {
 }
 
 
+#Check if a labelled variable has any labels
+#'@importFrom haven is.labelled
+doCheckLabs <- function(v) {
+ # browser()
+  if (!is.labelled(v)) return(v)
+  cV <- class(v)
+  if (length(cV) > 1) {
+    if (!is.null(attr(v, "labels"))) return(v)
+    class(v) <- c("fakeLabelled", setdiff(class(v), "labelled"))
+    attr(v, "originalClass") <- "labelled"
+    return(v)
+  }
+  return(v)
+}
 
 
 

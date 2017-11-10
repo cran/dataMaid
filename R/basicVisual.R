@@ -3,7 +3,7 @@
 #'
 #' Plot the distribution of a variable, depending on its data class, using the base R
 #' plotting functions. Note that \code{basicVisual} is a \code{\link{visualFunction}}, compatible with the 
-#' \code{\link{visualize}} and \code{\link{clean}} functions. 
+#' \code{\link{visualize}} and \code{\link{makeDataReport}} functions. 
 #'
 #' For character, factor, logical and labelled variables, a barplot is produced. For numeric, 
 #' integer or Date variables, \code{basicVisual} produces a histogram instead. Note that for
@@ -27,7 +27,7 @@
 #'
 #' @inheritParams standardVisual
 #' @importFrom stats na.omit
-#' @importFrom graphics plot hist
+#' @importFrom graphics plot hist plot.new text
 #' @export
 basicVisual <- function(v, vnam, doEval = TRUE) UseMethod("basicVisual")
 
@@ -35,13 +35,22 @@ basicVisual <- function(v, vnam, doEval = TRUE) UseMethod("basicVisual")
 #Assign methods to generic standardVisual function
 
 #' @export
+basicVisual.default <- function(v, vnam, doEval = TRUE) {
+  thisCall <- call("graphicsEmptyPlot", v = v)
+  if (doEval) {
+    return(eval(thisCall))
+  } else return(deparse(thisCall))
+}
+  
+#' @export
 basicVisual.character <- function(v, vnam, doEval = TRUE) basicVisualCFLB(v, vnam, doEval=doEval)
 
 #' @export
 basicVisual.factor <- function(v, vnam, doEval = TRUE) basicVisualCFLB(v, vnam, doEval=doEval)
 
 #' @export
-basicVisual.labelled <- function(v, vnam, doEval = TRUE) basicVisualCFLB(v, vnam, doEval=doEval)
+basicVisual.labelled <- function(v, vnam, doEval = TRUE) basicVisualCFLB(haven::as_factor(v), 
+                                                                         vnam, doEval=doEval)
 
 #' @export
 basicVisual.numeric <- function(v, vnam, doEval = TRUE) basicVisualIN(v, vnam, doEval=doEval)
@@ -69,8 +78,13 @@ basicVisual <- visualFunction(basicVisual, "Histograms and barplots using graphi
 #' importFrom stats na.omit
 #' @inheritParams standardVisual
 basicVisualCFLB <- function(v, vnam, doEval = TRUE) {
-  v <- as.factor(v)
-  thisCall <- call("plot", x = na.omit(v), main = vnam)
+  v <- escapeRStyle(na.omit(v))
+  if (identifyNums(v, nVals = 0)$problem) {
+    v <- as.numeric(as.character(v))
+  }
+  v <- factor(v)
+  aggrV <- table(v)
+  thisCall <- call("barplot", height = aggrV, main = vnam)
   if (doEval) {
     return(eval(thisCall))
   } else return(deparse(thisCall))
@@ -79,7 +93,8 @@ basicVisualCFLB <- function(v, vnam, doEval = TRUE) {
 #numeric and integer variables
 basicVisualIN <- function(v, vnam, doEval = TRUE) {
   v <- v[is.finite(v)]
-  thisCall <- call("hist", v, main = vnam, col = "grey", xlab = "")
+  aggrV <- hist(v, plot = FALSE)
+  thisCall <- call("plot", aggrV, main = vnam, col = "grey", xlab = "")
   if (doEval) {
     return(eval(thisCall))
   } else return(deparse(thisCall))
@@ -94,4 +109,13 @@ basicVisualD <- function(v, vnam, doEval = TRUE) {
   if (doEval) {
     return(eval(thisCall))
   } else return(deparse(thisCall))
+}
+
+
+#Make empty plot
+graphicsEmptyPlot <- function(v) {  
+  vClass <- class(v)[1]
+  plot.new() + text(x = 0.5, y = 0.5, offset = 0, 
+                    labels = paste("No plot available for variables",
+                                   "of class:", vClass))
 }

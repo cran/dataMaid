@@ -6,10 +6,10 @@
 #' @param v A Date, numeric or integer variable to check.
 #' 
 #' @param nMax The maximum number of problematic values to report. 
-#' Default is \code{Inf}, in whichall problematic values are included 
-#' in the outputted message.
+#' Default is \code{10}. Set to \code{Inf} if all problematic values are to be included 
+#' in the outputted message, or to \code{0} for no output.
 #' 
-#' @inheritParams clean
+#' @inheritParams makeDataReport
 #'
 #' @details Outliers are identified based on an outlier rule that is 
 #' appropriate for asymmetric data. Outliers are observations outside the range
@@ -46,22 +46,22 @@
 #'
 #' @importFrom stats na.omit quantile
 #' @export
-identifyOutliers <- function(v, nMax = Inf, maxDecimals = 2) UseMethod("identifyOutliers")
+identifyOutliers <- function(v, nMax = 10, maxDecimals = 2) UseMethod("identifyOutliers")
 
 
 #add methods to generic identifyOutliers function
 #' @export
-identifyOutliers.numeric <- function(v, nMax = Inf, maxDecimals = 2) {
+identifyOutliers.numeric <- function(v, nMax = 10, maxDecimals = 2) {
   identifyOutliersNI(v, nMax = nMax, maxDecimals = maxDecimals)
 }
 
 #' @export
-identifyOutliers.integer <- function(v, nMax = Inf, maxDecimals = 2) {
+identifyOutliers.integer <- function(v, nMax = 10, maxDecimals = 2) {
   identifyOutliersNI(v, nMax = nMax, maxDecimals = maxDecimals)
 }
 
 #' @export
-identifyOutliers.Date <- function(v, nMax = Inf, maxDecimals = 2) {
+identifyOutliers.Date <- function(v, nMax = 10, maxDecimals = 2) {
   identifyOutliersD(v, nMax = nMax, maxDecimals = maxDecimals)
 }
 
@@ -75,12 +75,14 @@ identifyOutliers <- checkFunction(identifyOutliers, "Identify outliers",
 
 ##########################################Not exported below#########################################
 
+identifyOutliersMessage <- "Note that the following possible outlier values were detected:"
 
 ##numerical and integer variables
 identifyOutliersNI <- function(v, nMax, maxDecimals) {
   res <- findOutliers(v, maxDecimals)
   outMessage <- messageGenerator(list(problem = res$problem,
                                       problemValues = res$problemValues),
+                                 message = identifyOutliersMessage,
                                  nMax = nMax)
   checkResult(list(problem = res$problem, message = outMessage, 
                    problemValues = res$outProblemValues))
@@ -99,6 +101,7 @@ identifyOutliersD <- function(v, nMax, maxDecimals) {
   }
   outMessage <- messageGenerator(list(problem = res$problem,
                                       problemValues = res$problemValues),
+                                 message = identifyOutliersMessage,
                                  nMax = nMax)
   checkResult(list(problem = res$problem, message = outMessage, 
                    problemValues = res$outProblemValues))

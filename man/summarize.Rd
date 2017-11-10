@@ -2,17 +2,32 @@
 % Please edit documentation in R/summarize.R
 \name{summarize}
 \alias{summarize}
-\title{Make summary matrix}
+\title{Summarize a variable/dataset}
 \usage{
-summarize(v, ...)
+summarize(v, reportstyleOutput = FALSE, summaries = setSummaries(), ...)
 }
 \arguments{
 \item{v}{The variable (vector) or dataset (data.frame) to be summarized.}
 
-\item{...}{Additional argument passed to data class specific methods. First and foremost,
-this is where to supply the summary functions (see details).}
+\item{reportstyleOutput}{Logical indicating whether the output should
+be formatted for inclusion in the report (escaped matrix) or not. Defaults to not.}
+
+\item{summaries}{A list of summaries to use on each supported variable type. We recommend
+using \code{\link{setSummaries}} for creating this list and refer to the documentation
+of this function for more details.}
+
+\item{...}{Additional argument passed to data class specific methods.}
 }
 \value{
+The return value depends on the value of \code{reportstyleOutput}. 
+
+If \code{reportstyleOutput = FALSE} (the default): If \code{v} is a varibale, 
+a list of \code{summaryResult} objects, one \code{summaryResult} for each summary
+function called on \code{v}. If \code{v} is a dataset, then \code{summarize()} returns 
+a list of lists of \code{summaryResult} objects instead; one list for each variable
+in \code{v}.  
+
+If \code{reportstyleOutput = TRUE}: 
 If \code{v} is a single variable: A matrix with two columns, \code{feature} and 
 \code{result} and one row for each summary function that was called. Character
 strings in this matrix are escaped such that they are ready for Rmarkdown rendering.
@@ -21,7 +36,7 @@ If \code{v} is a full dataset: A list of matrices as described above, one for ea
 variable in the dataset.
 }
 \description{
-Generic shell function that produces a summary matrix for a variable (or for each
+Generic shell function that produces a summary of a variable (or for each
 variable in an entire dataset), given a number of summary functions and 
 depending on its data class.
 }
@@ -34,7 +49,8 @@ Note that an overview of all available \code{summaryFunction}s can be obtained b
 \code{\link{allSummaryFunctions}}. 
 
 The default choices of \code{summaryFunctions} are available in data class specific functions, e.g.
-\code{defaultCharacterSummaries()} and \code{defaultNumericSummaries()}.
+\code{defaultCharacterSummaries()} and \code{defaultNumericSummaries()}. 
+A complete overview of all default options can be obtained by calling setSummaries()
 
 A user defined summary function can be supplied using its function name. Note
 however that it should take a vector as argument and return a list on the form
@@ -54,22 +70,29 @@ valid summary functions are found in \code{\link{summaryFunction}}.
      res <- length(which(v == 0))
      summaryResult(list(feature="No. zeros", result = res, value = res))
    }
-   summarize(charV, characterSummaries = c(defaultCharacterSummaries(), "countZeros"))
+   summarize(charV, 
+     summaries = setSummaries(character = defaultCharacterSummaries(add = "countZeros")))
 
  #Does nothing, as intV is not affected by characterSummaries
    intV <- c(0:10)
-   summarize(intV, characterSummaries = c(defaultCharacterSummaries(), "countZeros"))
+   summarize(intV, 
+     summaries = setSummaries(character = defaultCharacterSummaries(add = "countZeros")))
 
  #But supplying the argument for integer variables changes the summary:
-   summarize(intV, integerSummaries = "countZeros")
+   summarize(intV, summaries = setSummaries(integer = "countZeros"))
    
  #Summarize a full dataset:
   data(cars)
   summarize(cars)
+  
+ #Summarize a variable and obtain report-style output (formatted for markdown)
+  summarize(charV, reportstyleOutput = TRUE)
 
 }
 \seealso{
+\code{\link{setSummaries}},
 \code{\link{summaryFunction}}, \code{\link{allSummaryFunctions}}, 
+\code{\link{summaryResult}},
 \code{\link{defaultCharacterSummaries}}, \code{\link{defaultFactorSummaries}},
 \code{\link{defaultLabelledSummaries}}, \code{\link{defaultLabelledSummaries}},
 \code{\link{defaultNumericSummaries}}, \code{\link{defaultIntegerSummaries}},

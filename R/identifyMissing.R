@@ -4,8 +4,9 @@
 #' appear to be miscoded missing values.
 #'
 #' @param v A variable to check.
-#' @param nMax The maximum number of problematic values to report. Default is \code{Inf}, in which case
-#' all problematic values are included in the outputted message.
+#' @param nMax The maximum number of problematic values to report. 
+#' Default is \code{10}. Set to \code{Inf} if all problematic values are to be included 
+#' in the outputted message, or to \code{0} for no output.
 #' @param ... Not in use.
 #'
 #' @details \code{identifyMissing} tries to identify common choices of missing values outside of the
@@ -45,26 +46,26 @@
 #'
 #' @importFrom stats na.omit
 #' @export
-identifyMissing <- function(v, nMax = Inf, ...) UseMethod("identifyMissing")
+identifyMissing <- function(v, nMax = 10, ...) UseMethod("identifyMissing")
 
 
 #Add methods to generic identifyMiss
 #' @export
-identifyMissing.character <- function(v, nMax = Inf, ...) identifyMissingCF(v, nMax = nMax)
+identifyMissing.character <- function(v, nMax = 10, ...) identifyMissingCF(v, nMax = nMax)
 #' @export
-identifyMissing.factor <- function(v, nMax = Inf, ...) identifyMissingCF(v, nMax = nMax)
+identifyMissing.factor <- function(v, nMax = 10, ...) identifyMissingCF(v, nMax = nMax)
 #' @export
-identifyMissing.labelled <- function(v, nMax = Inf, ...) identifyMissingL(v, nMax = nMax)
+identifyMissing.labelled <- function(v, nMax = 10, ...) identifyMissingL(v, nMax = nMax)
 #' @export
-identifyMissing.numeric <- function(v, nMax = Inf, ...) {
+identifyMissing.numeric <- function(v, nMax = 10, ...) {
   identifyMissingNI(v, nMax = nMax, ...)
 }
 #' @export
-identifyMissing.integer <- function(v, nMax = Inf, ...) {
+identifyMissing.integer <- function(v, nMax = 10, ...) {
   identifyMissingNI(v, nMax = nMax, ...)
 }
 #' @export
-identifyMissing.logical <- function(v, nMax = Inf, ...) identifyMissingB(v, nMax = nMax)
+identifyMissing.logical <- function(v, nMax = 10, ...) identifyMissingB(v, nMax = nMax)
 
 
 #make it a checkFunction
@@ -74,7 +75,7 @@ identifyMissing <- checkFunction(identifyMissing, "Identify miscoded missing val
 
 ##########################################Not exported below#########################################
 
-
+identifyMissingMessage <- "The following suspected missing value codes enter as regular values:"
 
 #NOTE: I fill out missStrs manually to avoid having to run the same
 #bit of code each time identifyMiss is called. Better way to do it?
@@ -116,8 +117,9 @@ identifyMissRepChar <- function(v, char, prefix=NULL, ignoreFirst = FALSE) {
 #are identified. However, an occurrence only "counts" if it
 #is the min/max value of the variable and it is seperated from
 #the second biggest (smallest) value by at least 1.
-identifyMissNumber <- function(v, num, allOcc = TRUE) {
-  v <- sort(unique(v))
+identifyMissNumber <- function(v, num, allOcc = TRUE, alreadyUniqueSorted=FALSE) {
+  if (!alreadyUniqueSorted)
+      v <- sort(unique(v))
   posProblemVals <- identifyMissRepChar(v, num)
   negProblemVals <- identifyMissRepChar(v, num, prefix="-")
   if (allOcc) {
@@ -193,6 +195,7 @@ identifyMissingCF <- function(v, nMax) {
 
     outMessage <- messageGenerator(list(problem = problem,
                                         problemValues = problemValues),
+                                   message = identifyMissingMessage,
                                    nMax = nMax)
     checkResult(list(problem = problem, message = outMessage,
                      problemValues = problemValues))
@@ -200,9 +203,7 @@ identifyMissingCF <- function(v, nMax) {
 
 #labelled variables
 identifyMissingL <- function(v, nMax) {
-  v <- na.omit(v)
-  ##  v <- unpackLabelled(v)
-  v <- haven::as_factor(v)
+  v <- na.omit(haven::as_factor(v))
   identifyMissingCF(v, nMax = nMax)
 }
 
@@ -229,12 +230,13 @@ identifyMissingNI <- function(v, nMax, maxDecimals) {
   allProblemOcc <- c(missNinesOcc, missEightsOcc, missNaNOcc)
 
   if (length(allProblemOcc) > 0) {
-    outProblemValues <- problemValues
+    outProblemValues <- allProblemOcc
     problemValues <- round(allProblemOcc, maxDecimals)
     problem <- TRUE
   }
   outMessage <- messageGenerator(list(problem = problem,
                                       problemValues = problemValues),
+                                 message = identifyMissingMessage,
                                  nMax = nMax)
   checkResult(list(problem = problem, message = outMessage,
                    problemValues = outProblemValues))
