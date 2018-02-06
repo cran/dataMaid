@@ -126,7 +126,9 @@
 #'
 #' @param addSummaryTable A logical. If \code{TRUE} (the default), a summary table
 #' of the variable checks is added between the Data Cleaning Summary and the
-#' Variable List.
+#' Variable List. Only one of \code{addSummaryTable} and \code{addCodebookTable} can be \code{TRUE}.
+#'
+#' @param codebook A logical. Defaults to \code{FALSE}. If \code{TRUE} then the document is tweaked to better represent a codebook.
 #'
 #' @param reportTitle A text string. If supplied, this will be the printed title of the
 #' report. If left unspecified, the title with the name of the supplied dataset.
@@ -231,6 +233,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
                   maxProbVals = 10,
                   maxDecimals = 2,
                   addSummaryTable = TRUE,
+                  codebook = FALSE,
                   reportTitle = NULL,
                   treatXasY = NULL,
                   ...) {
@@ -277,7 +280,6 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
     silent <- FALSE
     #perhaps check if quiet argument is valid (i.e. TRUE/FALSE) here?
   }
- 
   
   
   ##Match arguments
@@ -287,69 +289,73 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
   
   
   #Set output default if output is NULL or check for valid values otherwise
-  makeOutputWarning <- FALSE
-  if (!is.null(output)) {
-    if (length(output) > 1) {
-      output <- output[1]
-      warning("Output argument was wrongfully given as a vector. Only the first entry was used.")
-    }
-    if (!(output %in% c("pdf", "html", "word"))) {
-      output <- NULL
+    makeOutputWarning <- FALSE
+    if (!is.null(output)) {
+        if (length(output) > 1) {
+            output <- output[1]
+            warning("Output argument was wrongfully given as a vector. Only the first entry was used.")
+        }
+        if (!(output %in% c("pdf", "html", "word"))) {
+            output <- NULL
       makeOutputWarning <- TRUE
-    } 
-  }
-  if (is.null(output)) {
-    xelatexTest <- suppressWarnings(system("xelatex --version", show.output.on.console = FALSE)) == 0
-    pdflatexTest <- suppressWarnings(system("pdflatex --version", show.output.on.console = FALSE)) == 0
-    lualatexTest <- suppressWarnings(system("lualatex --version", show.output.on.console = FALSE)) == 0
-    if (any(c(xelatexTest, pdflatexTest, lualatexTest))) {
-      output <- "pdf"
-    } else {
-      if (identical(as.character(Sys.info()["sysname"]),"Windows")) {
-        output <- "word"
-      } else output <- "html"
+        } 
     }
-    if (makeOutputWarning) {
-      warning(paste("No valid output option was chosen. ", 
-                    "Therefore, output was set to ", output, ".", sep = ""))
+    if (is.null(output)) {
+        xelatexTest <- suppressWarnings(system2("xelatex", args=c("--version"), stdout=NULL, stderr=NULL)) == 0
+        pdflatexTest <- suppressWarnings(system2("pdflatex", args=c("--version"), stdout=NULL, stderr=NULL)) == 0
+        lualatexTest <- suppressWarnings(system2("lualatex", args=c("--version"), stdout=NULL, stderr=NULL)) == 0
+        
+        ##    xelatexTest <- suppressWarnings(system("xelatex --version", show.output.on.console = FALSE)) == 0
+        ##   pdflatexTest <- suppressWarnings(system("pdflatex --version", show.output.on.console = FALSE)) == 0
+        ##    lualatexTest <- suppressWarnings(system("lualatex --version", show.output.on.console = FALSE)) == 0
+        if (any(c(xelatexTest, pdflatexTest, lualatexTest))) {
+            output <- "pdf"
+        } else {
+            if (identical(as.character(Sys.info()["sysname"]),"Windows")) {
+                output <- "word"
+            } else output <- "html"
+        }
+        if (makeOutputWarning) {
+            warning(paste("No valid output option was chosen. ", 
+                          "Therefore, output was set to ", output, ".", sep = ""))
+        }
     }
-  }
-
-  ## Extract the dataframe name
-  dfname <- deparse(substitute(data))
-  
-  the_lhs <- function() {
-    parents <- lapply(sys.frames(), parent.env)
     
-    is_magrittr_env <- vapply(parents, identical, logical(1), y = environment(`%>%`))
+    ## Extract the dataframe name
+    dfname <- deparse(substitute(data))
     
-    if (any(is_magrittr_env)) {
-      deparse(get("lhs", sys.frames()[[max(which(is_magrittr_env))]]))
+    the_lhs <- function() {
+        parents <- lapply(sys.frames(), parent.env)
+        
+        is_magrittr_env <- vapply(parents, identical, logical(1), y = environment(`%>%`))
+        
+        if (any(is_magrittr_env)) {
+            deparse(get("lhs", sys.frames()[[max(which(is_magrittr_env))]]))
+        }
     }
-  }
-  
-  
-  ## Now if data are added as part of a magrittr pipe then use this "fix"
-  if (dfname==".") {
-    dfname <- the_lhs()
-  }
-  
-  #If standAlone is FALSE, the document obviously shouldn't be rendered
-  if (!standAlone) render <- FALSE
-  
+    
+    
+    ## Now if data are added as part of a magrittr pipe then use this "fix"
+    if (dfname==".") {
+        dfname <- the_lhs()
+    }
+    
+                                        #If standAlone is FALSE, the document obviously shouldn't be rendered
+    if (!standAlone) render <- FALSE
+    
   ##########################################################################################
-  #######Secret arguments that were removed for the users but are still implemented#########
-  ##########################################################################################
-  
-  #If the users don't ask for silence, they will be nagged.
-  nagUser <- TRUE
-  if (silent) nagUser <- FALSE
-  
-  ##########################################################################################
-  ##########################################################################################
-  ##########################################################################################
-  
-  ## What variables should be used?
+#######Secret arguments that were removed for the users but are still implemented#########
+##########################################################################################
+    
+                                        #If the users don't ask for silence, they will be nagged.
+    nagUser <- TRUE
+    if (silent) nagUser <- FALSE
+    
+##########################################################################################
+##########################################################################################
+##########################################################################################
+    
+    ## What variables should be used?
   if (!is.null(useVar)) {
     ## The line below is probably not efficient if we have large datasets and want to extract many variables
     ### o <- o[, useVar, drop=FALSE]  #warning here if this doesn't work + overwrite stuff?
@@ -487,7 +493,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
   doSummarize <- "summarize" %in% mode
   
   if (!doCheck & !doVisualize & !doSummarize & !silent) {
-    warning("Note that no proper arguments were supplied to \"mode\" - no data report genereation performed")
+    warning("Note that no proper arguments were supplied to \"mode\" - no data report generation performed")
   } #rewrite warning message
   
   ## Disregard the twocolumn option if we're only asking for one of visualize and summarize
@@ -606,10 +612,15 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
       writer(paste("date:", Sys.time())) 
       if (output=="pdf") {
         writer("output: pdf_document")
-        writer("documentclass: report")
+        writer(paste0("documentclass: ", ifelse(codebook, "article", "report")))
         writer("header-includes:")
-        writer("  - \\renewcommand{\\chaptername}{Part}")
+        if (!codebook) {
+            writer("  - \\renewcommand{\\chaptername}{Part}")
+        }
         writer("  - \\newcommand{\\fullline}{\\noindent\\makebox[\\linewidth]{\\rule{\\textwidth}{0.4pt}}}")
+        if (codebook) {
+            writer("  - \\renewcommand\\familydefault{\\sfdefault}")
+        }       
         if (twoCol) {
           writer("  - \\newcommand{\\bminione}{\\begin{minipage}{0.75 \\textwidth}}")
           writer("  - \\newcommand{\\bminitwo}{\\begin{minipage}{0.25 \\textwidth}}")
@@ -708,8 +719,10 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
                            distinctVals = rep(NA, nvariables),
                            missingPct = rep(NA, nvariables),
                            problems = rep("", nvariables),
-                           stringsAsFactors = FALSE)
-      
+                           stringsAsFactors = FALSE,
+                           label = rep(NA, nvariables),
+                           description = rep(NA, nvariables))
+
       ## List of variables
       writer("# Variable list", outfile = vListConn)
       
@@ -726,7 +739,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
         ## Choose variable
         v <- data[[idx]]
         vnam <- vnames[idx]
-        
+
         #  browser()
         
         ## Check if variable is key/empty
@@ -736,6 +749,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
         
         ## Deal with non-supported classes whose handling is 
         ## specified in treatXasY
+        ## Note: prechecks should be run again after change of class
         userSuppVar <- FALSE
         if ("isSupported" %in% preChecks && 
             preCheckProblems[which(preChecks == "isSupported")] &&  
@@ -745,8 +759,11 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
           if (!is.na(firstUSClass)) {
             attr(v, "orginalClass") <- vClasses[1]
             class(v) <- treatXasY[[firstUSClass]]
-            preCheckProblems[which(preChecks == "isSupported")] <- FALSE
-            preCheckMessages[which(preChecks == "isSupported")] <- ""
+            preCheckRes <- lapply(preChecks, function(x) eval(call(x, v)))
+            preCheckProblems <- sapply(preCheckRes, function(x) x$problem)
+            preCheckMessages <- sapply(preCheckRes, function(x) x$message)
+            #preCheckProblems[which(preChecks == "isSupported")] <- FALSE
+            #preCheckMessages[which(preChecks == "isSupported")] <- ""
             userSuppVar <- TRUE
           }
         }
@@ -754,7 +771,8 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
         ## Deal with labelled variables: If they don't have any labels and
         ## they inherit from a base class, treat them as that base class
         if (labelled_as == "factor" & !userSuppVar) {
-          v <- doCheckLabs(v)
+            v <- doCheckLabs(v)
+            
           if ("fakeLabelled" %in% class(v)) {
             extraMessages$do <- TRUE
             extraMessages$messages <- c(extraMessages$messages,
@@ -777,24 +795,25 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
         }
         
         
-        
         ## Make checks
         if (doCheck && !any(preCheckProblems)) {
           #if (vnam == "numOutlierVar") browser()
-          checkRes <- check(v, characterChecks = characterChecks,
-                            factorChecks = factorChecks,
-                            labelledChecks = labelledChecks,
-                            numericChecks = numericChecks,
-                            integerChecks = integerChecks,
-                            logicalChecks = logicalChecks,
-                            dateChecks = dateChecks,
+          checkRes <- check(v, checks = setChecks(character = characterChecks,
+                                                  factor = factorChecks,
+                                                  labelled = labelledChecks,
+                                                  numeric = numericChecks,
+                                                  integer = integerChecks,
+                                                  logical = logicalChecks,
+                                                  Date = dateChecks),
                             nMax = maxProbVals,
                             maxDecimals = maxDecimals, ...)
           problems <- sapply(checkRes, function(x) x[[1]]) #maybe change to index by name?
         }
         
         #Update problem status in results overview
-        if (any(c(problems, preCheckProblems)))  {
+        if (any(unlist(c(problems, preCheckProblems))))  {
+          y <- ifelse(output == "pdf", "$\\times$", "&times;")
+            #note: y initialized above, but only in an if-statement
           allRes$problems[allRes$variable == vnam] <- y
         }
         
@@ -809,7 +828,11 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
           writer("## ", printable_name, "\n", outfile = vListConn) #** makes linking complicated
           
           #Fill out name, vClass and missingPct entries in the results overview
-          allRes$name[allRes$variable == vnam] <- paste("[", printable_name, "]", sep = "")
+            allRes$name[allRes$variable == vnam] <- paste("[", printable_name, "]", sep = "")
+            ## Pass on the labels for the codebook
+            allRes$label[allRes$variable == vnam] <- ifelse(is.null(attr(v, "label")), "", attr(v, "label"))
+            allRes$description[allRes$variable == vnam] <- ifelse(is.null(attr(v, "shortDescription")), "", 
+                                                                  attr(v, "shortDescription"))
           allRes$vClass[allRes$variable == vnam] <- oClass(v)[1]
           allRes$missingPct[allRes$variable == vnam] <- paste(format(round(100*mean(is.na(v)),2),
                                                                      nsmall = 2), "%")
@@ -833,13 +856,14 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
             ## make Summary table
             if (doSummarize) sumTable <- pander::pandoc.table.return(summarize(v,
                                                                          reportstyleOutput = TRUE,
-                                                                         characterSummaries = characterSummaries,
-                                                                         factorSummaries = factorSummaries,
-                                                                         labelledSummaries = labelledSummaries,
-                                                                         numericSummaries = numericSummaries,
-                                                                         integerSummaries = integerSummaries,
-                                                                         logicalSummaries = logicalSummaries,
-                                                                         dateSummaries = dateSummaries,
+                                                                         summaries = setSummaries(
+                                                                           character = characterSummaries,
+                                                                           factor = factorSummaries,
+                                                                           labelled = labelledSummaries,
+                                                                           numeric = numericSummaries,
+                                                                           integer = integerSummaries,
+                                                                           logical = logicalSummaries,
+                                                                           Date = dateSummaries),
                                                                          maxDecimals = maxDecimals, ...),
                                                                justify="lr")
             #NOTE: pander_return() does the same thing but results in problems when used 
@@ -852,13 +876,14 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
             
             ## make Visualization
             if (doVisualize) visual <- visualize(v, vnam, doEval=FALSE, 
-                                                 characterVisual = characterVisual, 
-                                                 factorVisual = factorVisual, 
-                                                 labelledVisual = labelledVisual,
-                                                 numericVisual = numericVisual,
-                                                 integerVisual = integerVisual,
-                                                 logicalVisual = logicalVisual,
-                                                 DateVisual = dateVisual, ...)
+                                                 visuals = setVisuals(character = characterVisual,
+                                                                      factor = factorVisual,
+                                                                      labelled = labelledVisual,
+                                                                      numeric = numericVisual,
+                                                                      integer = integerVisual,
+                                                                      logical = logicalVisual,
+                                                                      Date = dateVisual),
+                                                 ...)
             
             ## Chunkname should avoid spaces and periods
             chunk_name <- paste0("Var-", idx, "-", gsub("[_:. ]", "-", vnam))
@@ -906,23 +931,64 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
     
     #Add variable summary table
     if (addSummaryTable) {
-      writer("# Summary table")
+
+        if (!codebook) {
+        
+            writer("# Summary table")
+            
+            ## Drop the variables that are only used for the codebook
+            allRes$label <- NULL
+            allRes$description <- NULL
+            
+            ##remove skipped variabled (e.g. due to onlyProblematic = TRUE) and
+            ##drop variable with original variable names (not formatted for printing)
+            allRes <- na.omit(allRes)[, -1]
+            rownames(allRes) <- 1:nrow(allRes) #note: necessary, as pander prints
+            ##non-trivial row names as a column
+            ##and data.frame subsetting creates
+            ##rownames like c(1, 2, 4, 5, 9)...
       
-      #remove skipped variabled (e.g. due to onlyProblematic = TRUE) and
-      #drop variable with original variable names (not formatted for printing)
-      allRes <- na.omit(allRes)[, -1]
-      rownames(allRes) <- 1:nrow(allRes) #note: necessary, as pander prints
-      #non-trivial row names as a column
-      #and data.frame subsetting creates
-      #rownames like c(1, 2, 4, 5, 9)...
+            ##Add names used for printing
+            names(allRes) <- c("", "Variable class", "# unique values", "Missing observations",
+                               "Any problems?")
       
-      #Add names used for printing
-      names(allRes) <- c("", "Variable class", "# unique values", "Missing observations",
-                         "Any problems?")
-      
-      writer(pander::pandoc.table.return(allRes, justify="llrrc"))
-      writer("\n")
+            writer(pander::pandoc.table.return(allRes, justify="llrrc"))
+            writer("\n")
+        } else {
+            ## Add stuff for codebook
+
+            writer("# Codebook summary table")
+            
+            ## drop variable with original variable names (not formatted for printing)
+            allRes <- allRes[, -1]
+
+            rownames(allRes) <- 1:nrow(allRes) #note: necessary, as pander prints
+            ##non-trivial row names as a column
+            ##and data.frame subsetting creates
+            ##rownames like c(1, 2, 4, 5, 9)...
+            
+            ##Add names used for printing
+            names(allRes) <- c("Variable", "Class", "# unique values", "Missing",
+                           "problems", "Label", "Description")
+
+            ## Reorder variables and add stuff to table 
+            ## Add stuff to table
+            
+            allResCodebook <- allRes[, c("Label", "Variable", "Class", "# unique values", "Missing", "Description")]
+            
+            writer(pander::pandoc.table.return(allResCodebook, justify="lllrcl",
+                                               missing="", split.cells=c(12, 8, 5, 8, 8, 35),
+                                               keep.line.breaks=TRUE,
+                                               emphasize.strong.cols = 2))
+                   #emphasize.verbatim.cols=2 doesn't work: It kills the links and prints
+                   #the "[]"s that are supposed to be interpreted in compiling
+                   
+            writer("\n")
+        }
+        
+        
     }
+    
     
     
     
@@ -1129,7 +1195,3 @@ doCheckLabs <- function(v) {
   }
   return(v)
 }
-
-
-
-

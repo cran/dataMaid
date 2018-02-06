@@ -2,6 +2,8 @@ context("dataMaid check")
 
 library(dataMaid)
 library(haven)
+
+Sys.setenv(TZ="Europe/Copenhagen")
                                        
 ## Define atomic types
 typel <- c(TRUE, FALSE, TRUE, TRUE, FALSE)
@@ -13,7 +15,7 @@ typef <- factor(types)
 typelab <- labelled(types, labels=c(A="A", BB="B", CCC="C", DDDD="D", EEEEE="E"))
 typer <- sapply(types, charToRaw)
 typelist <- list(a=1:3, b=1:10)
-typeDate <- as.Date(c("1jan1960", "2jan1960", "31mar1960", "30jul1960"), "%d%b%Y")
+typeDate <- as.Date(c("1jan1960", "2jan1960", "31mar1960", "30jul1960"), "%d%b%Y", tz="Europe/Copenhagen")
 
 
 ##
@@ -44,5 +46,5 @@ test_that("check return the right number of tests for (most) atomic vectors", {
     expect_equal(length(check(typef)), 5)
     expect_equal(length(check(typelab)), 5)
     ##expect_is(check(typer), "list")
-    expect_equal(length(check(typeDate)), 1)    
+    expect_equal(length(check(typeDate)), 2)    
 })  

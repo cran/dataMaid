@@ -1,6 +1,8 @@
 ## ----setup, include = FALSE----------------------------------------------
 knitr::opts_chunk$set(echo = TRUE, eval = TRUE)
 library(dataMaid)
+Sys.setenv(TZ="Europe/Copenhagen")  ## Set time zone to prevent warnings
+Sys.getenv("TZ")
 
 ## ----allClasses----------------------------------------------------------
 allClasses()
