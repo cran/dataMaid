@@ -655,7 +655,11 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
                      dimnames= list(NULL, c("Feature", "Result")))
     writer(pander::pandoc.table.return(sumMat, justify = "lr"))
     
-    
+    ## User added data.frame information
+    if (!is.null(attr(data, "label"))) {
+      writer(attr(data, "label"))
+    }
+        
     ## if useVar options are chosen, they are printed accordingly
     if (!is.null(useVar)) {
       writer(paste("\n* Only the following variables in", dfname, "were included:",
@@ -726,8 +730,8 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
       ## List of variables
       writer("# Variable list", outfile = vListConn)
       
-      
-      
+
+      ## Run through each of the variables in the data frame
       for (idx in index) {
         
         #Initialize variables
@@ -740,8 +744,6 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
         v <- data[[idx]]
         vnam <- vnames[idx]
 
-        #  browser()
-        
         ## Check if variable is key/empty
         preCheckRes <- lapply(preChecks, function(x) eval(call(x, v)))
         preCheckProblems <- sapply(preCheckRes, function(x) x$problem)
@@ -827,20 +829,21 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
           #writer("## **", printable_name, "**\n", outfile = vListConn)
           writer("## ", printable_name, "\n", outfile = vListConn) #** makes linking complicated
           
-          #Fill out name, vClass and missingPct entries in the results overview
+            ## Fill out name, vClass and missingPct entries in the results overview
             allRes$name[allRes$variable == vnam] <- paste("[", printable_name, "]", sep = "")
-            ## Pass on the labels for the codebook
+            ## Pass on the label for the codebook
             allRes$label[allRes$variable == vnam] <- ifelse(is.null(attr(v, "label")), "", attr(v, "label"))
             allRes$description[allRes$variable == vnam] <- ifelse(is.null(attr(v, "shortDescription")), "", 
                                                                   attr(v, "shortDescription"))
-          allRes$vClass[allRes$variable == vnam] <- oClass(v)[1]
+            allRes$vClass[allRes$variable == vnam] <- oClass(v)[1]
           allRes$missingPct[allRes$variable == vnam] <- paste(format(round(100*mean(is.na(v)),2),
                                                                      nsmall = 2), "%")
           allRes$distinctVals[allRes$variable == vnam] <- length(unique(v))
           
-          ## If the variable has label information the print that below
-          if ("label" %in% attributes(v)$names)
-            writer("*",attr(v, "label"), "*\n", outfile = vListConn)  # Write label
+            ## If the variable has label information the print that below
+            if (!is.null(attr(v, "label", exact=TRUE))) {
+                writer("*",attr(v, "label", exact=TRUE), "*\n", outfile = vListConn)  # Write variable label
+            }
           
           ## write result of key/empty check
           if (any(preCheckProblems)) {
@@ -1005,8 +1008,9 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
     writer("\n")
     
     writer("Report generation information:\n")
-    writer(" *  Created by ", whoami::fullname() , ".\n")
+    writer(" *  Created by ", whoami::fullname(fallback="Could not determine from system") , " (username: `", whoami::username(fallback="Unknown"),  "`).\n")
     writer(" *  Report creation time: ", format(Sys.time(), "%a %b %d %Y %H:%M:%S"),"\n")
+    writer(" *  Report Was run from directory: `", getwd(),"`\n")
     
     ## Part of this was lifted from devtools
     
@@ -1188,7 +1192,7 @@ doCheckLabs <- function(v) {
   if (!is.labelled(v)) return(v)
   cV <- class(v)
   if (length(cV) > 1) {
-    if (!is.null(attr(v, "labels"))) return(v)
+    if (!is.null(attr(v, "labels", exact=TRUE))) return(v)
     class(v) <- c("fakeLabelled", setdiff(class(v), "labelled"))
     attr(v, "originalClass") <- "labelled"
     return(v)

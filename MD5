@@ -1,4 +1,4 @@
-73e1a21b247ec8a81d6f071297916290 *DESCRIPTION
+8442e07a386fc08ad42b79f12032f703 *DESCRIPTION
 396f993ffb1918f36f9b447032c84dff *NAMESPACE
 b2c8d06f94e76a14de83eb72aefecf7c *R/aggregateForBarplot.R
 ea9cd48745872642211855cf0cc8366a *R/aggregateForHistogram.R
@@ -18,7 +18,7 @@ cf370593e4867df2de037a4c4e87500b *R/check.R
 5075c6a292b85e1d596d98a32a746546 *R/dataMaid-package.R
 c067cc29f53d240c1c981a08bba0d5cf *R/description.R
 f5db5d5ed0b3b140fce08fc48f2f7adb *R/identifyCaseIssues.R
-5fee77f0148f831c3d8a74175c0c7a90 *R/identifyLoners.R
+cb9d429a17a36821a63d25796557a68e *R/identifyLoners.R
 4be960c55576b52afd2c6f46b5b66480 *R/identifyMissing.R
 36e4f9e21a5fa69a17045a844f72c772 *R/identifyNums.R
 8584cdb64e6cdd2cdd55b339636b5425 *R/identifyOutliers.R
@@ -29,8 +29,8 @@ f72a5f4c433cb31fd93e3eb6c904451d *R/isCPR.R
 fe796d0d2b26f235ada92ab0168cde24 *R/isKey.R
 25bc8947d1ac07573bb11805d6c14758 *R/isSingular.R
 3f108ebc0143d71c5b7baab1793d936d *R/isSupported.R
-f2ecc99d7216df2a7a588d4538c72859 *R/makeCodebook.R
-8c2a3c9320f207ee0c57a5e724ac4652 *R/makeDataReport.R
+3a12d90089cbcf49308b6ec1b679e307 *R/makeCodebook.R
+0bb58be2729af01eefc89c5776165413 *R/makeDataReport.R
 eb5632cf87da9c6c3fe03ea871001cb8 *R/makeXFunction.R
 1f75b413d099444114c1a48d2c80d8b3 *R/messageGenerator.R
 d912d81638b3c8ec556195c83002aea2 *R/minMax.R
@@ -50,7 +50,7 @@ fc318cf000d1545629e5d4fe63226e3e *R/unpackLabelled.R
 b9c8d2041043741e9ec1e961f23927e9 *R/variableType.R
 329ffa7fb9b48dcb4ea0fb2b4d25e8de *R/visualFunction.R
 feef9776d56b6390508185d46615eb05 *R/visualize.R
-6149dba631cfda51d72d056c0648b562 *build/vignette.rds
+0192c9a32625553e36462036d64d21cf *build/vignette.rds
 2dc177c54a95ba9c587bc23b6e584d60 *data/artData.rda
 08d1bd37a5d014abcd909ac22fa4967a *data/bigPresidentData.rda
 51672e31b3b05d2d76f45fee5613a09b *data/exampleData.RData
@@ -59,7 +59,7 @@ feef9776d56b6390508185d46615eb05 *R/visualize.R
 b416f53a05785db91ffb11450b933865 *data/toyData.RData
 f7b8c9322ae31ef70b17c1ac211b2eff *inst/doc/extending_dataMaid.R
 b6f83e27ab8235fe4fef64e508331f82 *inst/doc/extending_dataMaid.Rmd
-55b963692bb706797f09736d164ee8e7 *inst/doc/extending_dataMaid.html
+1de7204f628502e2a2d6ff80736fbe25 *inst/doc/extending_dataMaid.html
 921ff68a60d632194deb89a69b241484 *man/allCheckFunctions.Rd
 cf8842738e6fe292f0370c7cda5aac35 *man/allClasses.Rd
 88980fc64bc706d2fd8a5ee97e46aa45 *man/allSummaryFunctions.Rd
@@ -102,7 +102,7 @@ f60a2b75690338433c12b06559a81078 *man/identifyOutliers.Rd
 5db7a1ffd9f5497047567268de8b35b5 *man/isKey.Rd
 c8f7b3cf7afe68a9c6ba168d5721fab1 *man/isSingular.Rd
 b2bdd5c15388903fc402294c1ecd06cd *man/isSupported.Rd
-141336be515c9348610486f398f00ba1 *man/makeCodebook.Rd
+97d6bee15fce5f438f6b8317f237ea7b *man/makeCodebook.Rd
 861e1691526df9fe07141b1489c211b8 *man/makeDataReport.Rd
 25abc8d8a91d46b39d08601460e07e7e *man/messageGenerator.Rd
 836ed5ffa182152fcf29b6036e6c1753 *man/minMax.Rd
@@ -125,6 +125,7 @@ a3da9abe792c44ae2c9f4dba1747261f *man/visualFunction.Rd
 56ef342db56876a2d9b7904cbc3d6eb9 *tests/testthat.R
 b31109ca23ec986ee19c2134d75cbefd *tests/testthat/atomic.R
 816eae6831c0c7560bd336e0fc71f78a *tests/testthat/testcheck.R
+94e2dffccd27182fd457074672ac7d14 *tests/testthat/testisLoner.R
 4e9c538a09c736d0221e2a33267c9955 *tests/testthat/testmakeReport.R
 7db7731fdef81b4f295b3ea398de8a18 *tests/testthat/testminMax.R
 e4b82e8f3bb17d07187fa249d14d300b *tests/testthat/testsummarize.R

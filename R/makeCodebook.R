@@ -15,33 +15,45 @@
 #' @param reportTitle A text string. If supplied, this will be the printed title of the
 #' report. If left unspecified, the title with the name of the supplied dataset.
 #'
+#' @param file The filename of the outputted rmarkdown (.Rmd) file.
+#' If set to \code{NULL} (the default), the filename will be the name of \code{data}
+#' prefixed with "codebook_", if this qualifies as a valid file name (e.g. no special
+#' characters allowed). Otherwise, \code{makeCodebook()} tries to create a valid filename by
+#' substituing illegal characters. Note that a valid file is of type .Rmd, hence all
+#' filenames should have a ".Rmd"-suffix.
+#'
 #' @param ... Additional parameters passed to \code{makeDataReport}.
 #' 
 #' @export
-makeCodebook <- function(data, vol="", reportTitle=NULL, ...) {
-  
+makeCodebook <- function(data, vol="", reportTitle=NULL, file=NULL, ...) {
+
+    
     dfname <- deparse(substitute(data))
 
-    ## make a temporary checkFunction to print all factor levels
+
+    Call <- match.call(expand.dots = TRUE)
+
+    Call$reportTitle <- ifelse(is.null(reportTitle), paste0("Codebook for ", dfname), reportTitle)
+    Call$file <- ifelse(is.null(file), normalizeFileName(paste0("codebook_", dfname, vol, ".Rmd")), file)
+    Call$codebook <- TRUE
+    Call$mode <- ifelse(is.null(Call[["mode"]]), c("summarize", "visualize", "check"), Call[["mode"]])
+    Call$checks <- ifelse(is.null(Call[["checks"]]), setChecks(
+                                                         character = list("showAllFactorLevels"),
+                                                         factor = list("showAllFactorLevels"),
+                                                         labelled = list("showAllFactorLevels"),
+                                                         numeric=NULL,
+                                                         integer=NULL,
+                                                         Date=NULL,
+                                                         logical=NULL
+                                                     ), Call[["checks"]])
+    Call$maxProbVals <- ifelse(is.null(Call[["maxProbVals"]]), Inf, Call[["maxProbVals"]])
+    Call$listChecks <-  ifelse(is.null(Call[["listChecks"]]), FALSE, Call[["listChecks"]])
+    Call$maxProbVals <- ifelse(is.null(Call[["smartNum"]]), FALSE, Call[["smartNum"]])
+                          
+    Call[[1L]] <- as.name("makeDataReport")
+    eval.parent(Call)
+
     
-    makeDataReport(data,
-                   reportTitle=paste0("Codebook for ", dfname),
-                   file=normalizeFileName(paste0("codebook_", dfname, vol, ".Rmd")),
-                   codebook=TRUE,
-                   mode = c("summarize", "visualize", "check"),
-                   checks = setChecks(
-                       character = list("showAllFactorLevels"),
-                       factor = list("showAllFactorLevels"),
-                       labelled = list("showAllFactorLevels"),
-                       numeric=NULL,
-                       integer=NULL,
-                       Date=NULL,
-                       logical=NULL
-                   ),
-                   maxProbVals = Inf,
-                   listChecks = FALSE,
-                   smartNum = FALSE, 
-                   ...)
 }
 
 
@@ -66,7 +78,7 @@ showAllFactorLevels <- function(v, nMax = NULL, ...) {
             problem <- TRUE
         } else {
             if ("labelled" %in% class(v)) {
-                problemValues <- names(attr(v, "labels"))
+                problemValues <- names(attr(v, "labels", exact=TRUE))
                 problem <- TRUE
             }
         }

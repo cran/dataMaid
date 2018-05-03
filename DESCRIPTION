@@ -2,8 +2,8 @@ Package: dataMaid
 Type: Package
 Title: A Suite of Checks for Identification of Potential Errors in a
         Data Frame as Part of the Data Screening Process
-Version: 1.1.0
-Date: 2018-02-06
+Version: 1.1.2
+Date: 2018-05-03
 Authors@R: c(person(given="Anne Helby", family="Petersen", email="ahpe@sund.ku.dk", role="aut"),
              person(given="Claus Thorn", family="Ekstrøm", email="ekstrom@sund.ku.dk", role=c("aut", "cre")))
 Description: Data screening is an important first step of any statistical
@@ -39,9 +39,9 @@ Collate: 'aggregateForBarplot.R' 'aggregateForHistogram.R'
         'summarize.R' 'summaryResult.R' 'uniqueValues.R'
         'unpackLabelled.R' 'variableType.R' 'visualize.R'
 NeedsCompilation: no
-Packaged: 2018-02-06 17:08:03 UTC; cld189
+Packaged: 2018-05-03 17:53:37 UTC; cld189
 Author: Anne Helby Petersen [aut],
   Claus Thorn Ekstrøm [aut, cre]
 Maintainer: Claus Thorn Ekstrøm <ekstrom@sund.ku.dk>
 Repository: CRAN
-Date/Publication: 2018-02-06 17:33:23 UTC
+Date/Publication: 2018-05-03 18:36:10 UTC
