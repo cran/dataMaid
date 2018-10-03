@@ -41,10 +41,10 @@
 #' @param onlyProblematic A logical. If \code{TRUE}, only the variables flagged as
 #' problematic in the check step will be included in the variable list.
 #'
-#' @param labelled_as A string explaining the way to handle labelled vectors.
-#' Currently \code{"factor"} (the default) is the only possibility. This means that labelled
+#' @param labelled_as A string explaining the way to handle labelled and haven_labelled vectors.
+#' Currently \code{"factor"} (the default) is the only possibility. This means that labelled or haven_labelled
 #' variables that appear factor-like (by having a non-\code{NULL} \code{labels}-attribute) will
-#' be treated as factors, while other labelled variables will be treated as whatever base
+#' be treated as factors, while other labelled or haven_labelled variables will be treated as whatever base
 #' variable class they inherit from.
 #'
 #'
@@ -135,11 +135,11 @@
 #'
 #' @param treatXasY A list that indicates how non-standard variable classes should be treated.
 #' This parameter allows you to include variables that are not of class \code{factor}, \code{character}, 
-#' \code{labelled}, \code{numeric}, \code{integer}, \code{logical} nor \code{Date} (or a class
+#' \code{labelled}, \code{haven_labelled}, \code{numeric}, \code{integer}, \code{logical} nor \code{Date} (or a class
 #' that inherits from any of these classes). The names of the list are the new classes and the entries
 #' are the names of the class, they should be treated as. If \code{makeDataReport()} should e.g. treat variables of 
 #' class \code{raw} as characters and variables of class \code{complex} as numeric, you should put
-#' \code{treatXasY = list(raw = "character", complex = "numeric")}.
+#' \code{treatXasY = list(raw = "character", complex = "numeric")}. 
 #'
 #' @param \dots Other arguments that are passed on the to precheck,
 #' checking, summary and visualization functions.
@@ -214,6 +214,7 @@
 #' @importFrom methods is
 #' @importFrom pander panderOptions pandoc.table.return
 #' @importFrom tools file_ext
+#' @importFrom stringi stri_trans_general
 #' @importFrom utils packageVersion sessionInfo capture.output packageDescription
 #' @importFrom magrittr %>%
 #' @export
@@ -251,7 +252,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
   
   #Check treatXasY argument
   ## Supported variable classes 
-  allClasses <- c("character", "factor", "labelled", "numeric", "integer", 
+  allClasses <- c("character", "factor", "labelled", "haven_labelled", "numeric", "integer", 
                   "logical", "Date")
   if (!is.null(treatXasY)) {
     if (!is.list(treatXasY)) {
@@ -501,6 +502,12 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
   if (!doVisualize || !doSummarize) twoCol <- FALSE
   
   
+  ## If "tableVisual" is chosen for any of the visuals, "twoCol = FALSE" wasn't chosen, and the output type
+  ## is pdf, write a message to the console suggesting for the user to set twoCol = FALSE
+  if ("tableVisual" %in% unlist(visuals) & twoCol & output == "pdf") {
+    message("Note: setting \"twoCol = FALSE\" will allow for nicer formatting of the data report when using the tableVisual visualization option\n")
+  }
+  
   ## make tables left-aligned and allow for 6 columns
   oldPanderOptions <- pander::panderOptions() # Used to restore towards the end
   ## panderOptions("table.alignment.default", "left")
@@ -517,6 +524,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
   characterChecks <- checks$character
   factorChecks <- checks$factor
   labelledChecks <- checks$labelled
+  havenlabelledChecks <- checks$haven_labelled
   numericChecks <- checks$numeric
   integerChecks <- checks$integer
   logicalChecks <- checks$logical
@@ -525,6 +533,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
   characterSummaries <- summaries$character
   factorSummaries <- summaries$factor
   labelledSummaries <- summaries$labelled
+  havenlabelledSummaries <- summaries$haven_labelled
   numericSummaries <- summaries$numeric
   integerSummaries <- summaries$integer
   logicalSummaries <- summaries$logical
@@ -533,10 +542,11 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
   characterVisual <- visuals$character
   factorVisual <- visuals$factor
   labelledVisual <- visuals$labelled
+  havenlabelledVisual <- visuals$haven_labelled
   numericVisual <- visuals$numeric
   integerVisual <- visuals$integer
   logicalVisual <- visuals$logical
-  dateVisual <- visuals$date
+  dateVisual <- visuals$Date
   
   ##
   ## Below comes a bunch of helper functions for writing the output
@@ -546,14 +556,14 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
   }
   
   chunk.wrapper <- function(x, ..., outfile=fileConn, options=c("echo=FALSE", "warning=FALSE"), label=NULL) {
-    writer(paste0("```{r ", ifelse(is.null(label), ", ", paste0(label, ", ")),
+    writer(paste0("```{r ", ifelse(is.null(label), ", ", paste0("'", label, "', ")),
                   paste0(options, collapse=", "), "}"),
            outfile = outfile)
     writer(x, ..., outfile = outfile)
     writer("```", outfile = outfile)
   }
   
-  fig.wrapper <- function(x, ..., outfile=fileConn, options=c("echo=FALSE", "fig.width=4",
+  fig.wrapper <- function(x, outfile=fileConn, options=c("echo=FALSE", "fig.width=4",
                                                               "fig.height=3", "message=FALSE",
                                                               "warning=FALSE"), label=NULL) {
     chunk.wrapper(x, outfile=outfile, options=options, label=label)
@@ -635,7 +645,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
     
     
     ## include packages as a first chunk
-    secretChunk.wrapper("library(ggplot2)\nlibrary(pander)")
+    secretChunk.wrapper('library("ggplot2")\nlibrary("pander")')
     
     ## Define unexported visual functions locally so that the report 
     ## can be rendered from the global environment. Only done if standardVisuals are used
@@ -676,15 +686,17 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
     
     ## List the checking that were used for each possible variable type
     if (listChecks) {
-      everyCheck <- union(characterChecks, c(factorChecks, labelledChecks, numericChecks,
+      everyCheck <- union(characterChecks, c(factorChecks, labelledChecks, 
+                                             havenlabelledChecks, numericChecks,
                                              integerChecks, logicalChecks, dateChecks))
-      checkMat <- matrix("", length(everyCheck), 7, #6: number of different variable types
-                         dimnames=list(everyCheck, c("character", "factor", "labelled",
+      checkMat <- matrix("", length(everyCheck), 8, #7: number of different variable types
+                         dimnames=list(everyCheck, c("character", "factor", "labelled", "haven labelled",
                                                      "numeric", "integer", "logical", "Date")))
       y <- ifelse(output == "pdf", "$\\times$", "&times;")
       checkMat[characterChecks, "character"] <- y
       checkMat[factorChecks, "factor"] <- y
       checkMat[labelledChecks, "labelled"] <- y
+      checkMat[havenlabelledChecks, "haven labelled"] <- y
       checkMat[numericChecks, "numeric"] <- y
       checkMat[integerChecks, "integer"] <- y
       checkMat[logicalChecks, "logical"] <- y
@@ -695,8 +707,14 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
       
       writer("### Checks performed")
       writer("The following variable checks were performed, depending on the data type of each variable:")
-      writer(pander::pandoc.table.return(checkMat, justify="lccccccc",
+   #   if (output == "pdf") {
+  #      writer("\\begin{tiny}")
+  #    }
+      writer(pander::pandoc.table.return(checkMat, justify="lcccccccc",
                                          emphasize.rownames=FALSE)) #allows for centering in this table only
+   #   if (output == "pdf") {
+    #    writer("\\end{tiny}")
+    #  }
       writer("\n")
       if (!is.null(treatXasY)) {
         writer("Non-supported variable types were set to be handled in the following way:")
@@ -803,6 +821,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
           checkRes <- check(v, checks = setChecks(character = characterChecks,
                                                   factor = factorChecks,
                                                   labelled = labelledChecks,
+                                                  haven_labelled = havenlabelledChecks,
                                                   numeric = numericChecks,
                                                   integer = integerChecks,
                                                   logical = logicalChecks,
@@ -832,7 +851,8 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
             ## Fill out name, vClass and missingPct entries in the results overview
             allRes$name[allRes$variable == vnam] <- paste("[", printable_name, "]", sep = "")
             ## Pass on the label for the codebook
-            allRes$label[allRes$variable == vnam] <- ifelse(is.null(attr(v, "label")), "", attr(v, "label"))
+              #Note: Need "exact = TRUE", otherwise attr might retreive "labels" attributes 
+            allRes$label[allRes$variable == vnam] <- ifelse(is.null(attr(v, "label", exact = TRUE)), "", attr(v, "label", exact = TRUE))
             allRes$description[allRes$variable == vnam] <- ifelse(is.null(attr(v, "shortDescription")), "", 
                                                                   attr(v, "shortDescription"))
             allRes$vClass[allRes$variable == vnam] <- oClass(v)[1]
@@ -863,6 +883,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
                                                                            character = characterSummaries,
                                                                            factor = factorSummaries,
                                                                            labelled = labelledSummaries,
+                                                                           haven_labelled = havenlabelledSummaries, 
                                                                            numeric = numericSummaries,
                                                                            integer = integerSummaries,
                                                                            logical = logicalSummaries,
@@ -882,6 +903,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
                                                  visuals = setVisuals(character = characterVisual,
                                                                       factor = factorVisual,
                                                                       labelled = labelledVisual,
+                                                                      haven_labelled = havenlabelledVisual, 
                                                                       numeric = numericVisual,
                                                                       integer = integerVisual,
                                                                       logical = logicalVisual,
@@ -889,7 +911,11 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
                                                  ...)
             
             ## Chunkname should avoid spaces and periods
-            chunk_name <- paste0("Var-", idx, "-", gsub("[_:. ]", "-", vnam))
+              ##  chunk_name <- paste0("Var-", idx, "-", gsub("[_:. ]", "-", vnam))
+              ## Since we are not really needing the specific chunk names with variables we could skip the trailing part
+              ## However, might be useful when looking at the rmd.
+             chunk_name <- paste0("Var-", idx, "-", stringi::stri_trans_general(gsub("[_:. ]", "-", vnam), "Latin-ASCII"))
+##              chunk_name <- paste0("Var-", idx)
             
             ## add visualization + summary results to output file
             if (twoCol) {
@@ -897,7 +923,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
             } else {
               if (doSummarize) writer(sumTable, outfile = vListConn)
               if (doVisualize) fig.wrapper(visual, label=chunk_name, outfile = vListConn)
-              writer("\n")
+              writer("\n", outfile = vListConn)
             }
             
             ## add check results to file
@@ -1010,7 +1036,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
     writer("Report generation information:\n")
     writer(" *  Created by ", whoami::fullname(fallback="Could not determine from system") , " (username: `", whoami::username(fallback="Unknown"),  "`).\n")
     writer(" *  Report creation time: ", format(Sys.time(), "%a %b %d %Y %H:%M:%S"),"\n")
-    writer(" *  Report Was run from directory: `", getwd(),"`\n")
+    writer(" *  Report was run from directory: `", getwd(),"`\n")
     
     ## Part of this was lifted from devtools
     
@@ -1073,7 +1099,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
     }    
     
     
-    desc <- lapply("dataMaid", packageDescription, lib.loc = NULL)
+    desc <- lapply("dataMaid", packageDescription, lib.loc = NULL, encoding = NA)
     version <- vapply(desc, function(x) x$Version, character(1))
     pkgdate <- vapply(desc, getdate, character(1))
     pkgsource <- vapply(desc, getpkgsource, character(1))
@@ -1189,12 +1215,13 @@ normalizeFileName <- function(fileName, replaceChar = "_") {
 #'@importFrom haven is.labelled
 doCheckLabs <- function(v) {
   # browser()
-  if (!is.labelled(v)) return(v)
+ # if (!is.labelled(v)) return(v)
   cV <- class(v)
+  if (!any(c("haven_labelled", "labelled") %in% cV)) return(v)
   if (length(cV) > 1) {
     if (!is.null(attr(v, "labels", exact=TRUE))) return(v)
-    class(v) <- c("fakeLabelled", setdiff(class(v), "labelled"))
-    attr(v, "originalClass") <- "labelled"
+    class(v) <- c("fakeLabelled", setdiff(class(v), c("labelled", "haven_labelled")))
+    attr(v, "originalClass") <- intersect(cV, c("haven_labelled", "labelled"))[1]
     return(v)
   }
   return(v)
