@@ -1,7 +1,7 @@
-4f27d140d8c5c5dae4fdd553731f6fe5 *DESCRIPTION
+7d856436a479639afe30088559d1553f *DESCRIPTION
 2f1a217f30483e2c899328cc1d498c0f *NAMESPACE
 b2c8d06f94e76a14de83eb72aefecf7c *R/aggregateForBarplot.R
-c541617508fb575a6f24a87b56c5965c *R/aggregateForHistogram.R
+dc97d7932658d35743abf017394b634f *R/aggregateForHistogram.R
 d376283cc2b9c1cbb14b772b2093c550 *R/allCheckFunctions.R
 8449db338a3858b3468f7b23f2b105cb *R/allClasses.R
 3ada880f9666fe57ded09335343aa6dd *R/allSummaryFunctions.R
@@ -31,7 +31,7 @@ fe796d0d2b26f235ada92ab0168cde24 *R/isKey.R
 3f2df55524afe9595c4f3a77ac518d56 *R/isSingular.R
 93fad7bcf20c6ea6fb1bd3faf9ad8ce6 *R/isSupported.R
 4be02be13f1c32857ef8c08a9d5c7138 *R/makeCodebook.R
-8bc398e3fe3ac642ccc0f0e17aaa178b *R/makeDataReport.R
+7ec1d8d9e287b2c45450c571c6fdcad6 *R/makeDataReport.R
 eb5632cf87da9c6c3fe03ea871001cb8 *R/makeXFunction.R
 1f75b413d099444114c1a48d2c80d8b3 *R/messageGenerator.R
 d912d81638b3c8ec556195c83002aea2 *R/minMax.R
@@ -43,7 +43,7 @@ a26979ef893388f921b633733267ceb4 *R/render.R
 e575e0944962c3e351e5fd320a9e053d *R/setSummaries.R
 c8d5a98b56835ca491ca88fb4c8b2fcf *R/setVisuals.R
 00447d49737dca4f259ba6bb960eea54 *R/smartNum.R
-643abcb1fba3742ccd04215392c406ac *R/standardVisual.R
+ff1359c0493b643cd79f6a2f30d16773 *R/standardVisual.R
 d5c936630ef0b96ce00ba44d55416128 *R/summarize.R
 3b8d3d4debd5fa56eaa2666c9850afbc *R/summaryFunction.R
 eac93e03f4021d66b6530d9453d153a7 *R/summaryResult.R
@@ -53,7 +53,7 @@ fc318cf000d1545629e5d4fe63226e3e *R/unpackLabelled.R
 b9c8d2041043741e9ec1e961f23927e9 *R/variableType.R
 329ffa7fb9b48dcb4ea0fb2b4d25e8de *R/visualFunction.R
 19c443aec60d03f77eb9d125c5e52f36 *R/visualize.R
-5ee963c40c9eabdaee866bb08a8f4df3 *build/vignette.rds
+39aba415fdce323700bd2f918b6185cd *build/vignette.rds
 2dc177c54a95ba9c587bc23b6e584d60 *data/artData.rda
 08d1bd37a5d014abcd909ac22fa4967a *data/bigPresidentData.rda
 51672e31b3b05d2d76f45fee5613a09b *data/exampleData.RData
@@ -62,7 +62,7 @@ b9c8d2041043741e9ec1e961f23927e9 *R/variableType.R
 b416f53a05785db91ffb11450b933865 *data/toyData.RData
 f7b8c9322ae31ef70b17c1ac211b2eff *inst/doc/extending_dataMaid.R
 b6f83e27ab8235fe4fef64e508331f82 *inst/doc/extending_dataMaid.Rmd
-da8084681911a055a1232f3763825da4 *inst/doc/extending_dataMaid.html
+e171955cabb339e7bec90c85deaf0178 *inst/doc/extending_dataMaid.html
 921ff68a60d632194deb89a69b241484 *man/allCheckFunctions.Rd
 30cbc2c52cebc0c06a6e5f305939a586 *man/allClasses.Rd
 88980fc64bc706d2fd8a5ee97e46aa45 *man/allSummaryFunctions.Rd
@@ -76,7 +76,7 @@ f3596ada65688ff0bee675fed8ee0afc *man/check.Rd
 491a0dd3b5bdf3af27d196f6dd98f20d *man/checkFunction.Rd
 391b4f90e81194c5c564a776186accf6 *man/checkResult.Rd
 705e618bd07546505adb0f3431eff5ec *man/classes.Rd
-9945ca5331f6d10e34ac99657a0f892d *man/clean.Rd
+a5c6695010bbe30e201edf973ba79eda *man/clean.Rd
 0a425d61301d94c60ff958d2a82a93f3 *man/countMissing.Rd
 c48a3045f7308cbebc11d66be4c3f603 *man/defaultCharacterChecks.Rd
 08459f8887ba0f274cefa90dbf69050d *man/defaultCharacterSummaries.Rd
@@ -108,7 +108,7 @@ d666f70bac07071dddef80f05504c211 *man/identifyWhitespace.Rd
 c8f7b3cf7afe68a9c6ba168d5721fab1 *man/isSingular.Rd
 424b2c282100ff8ec4af69da0ac6e024 *man/isSupported.Rd
 97d6bee15fce5f438f6b8317f237ea7b *man/makeCodebook.Rd
-27dd097ef5012cc228a52c964f4ba442 *man/makeDataReport.Rd
+6bf49f0b4cba50ff132253e492b26faf *man/makeDataReport.Rd
 25abc8d8a91d46b39d08601460e07e7e *man/messageGenerator.Rd
 836ed5ffa182152fcf29b6036e6c1753 *man/minMax.Rd
 9ab65f89d53a9f0bc921471746c5b231 *man/presidentData.Rd
@@ -116,10 +116,10 @@ a1dd921df211501c82011225b2b30afd *man/quartiles.Rd
 93d6330703cd3b2d0e5a752b6eef57da *man/refCat.Rd
 9e12adb4ff52180925e028af1cc98724 *man/render.Rd
 9aa8112c690455d7ac81b79538a3daf6 *man/setChecks.Rd
-f8495283f7ccb8cdc1aa5c0d2e98a78d *man/setSummaries.Rd
-7a1dc268820868c29f286f6d45afe974 *man/setVisuals.Rd
+64216d9f7b6bc88e4598d0aa94125a75 *man/setSummaries.Rd
+8c65c84a07fd0eeeef9ce3c39212e8dc *man/setVisuals.Rd
 619b3396ab2a8698117cd8dba349b670 *man/standardVisual.Rd
-ffae35306f9ca1ebe57b3abfaf6326dc *man/summarize.Rd
+dd9388b7d89f3706ce51ec2dd99e31ee *man/summarize.Rd
 aa36ecdb3fce3ed8a9d79bb1f095093e *man/summaryFunction.Rd
 a5cc1fd8705fa19c34d2e917ccff28e9 *man/summaryResult.Rd
 0384eed02feeabb2c695fd7467a5f6af *man/tableVisual.Rd
