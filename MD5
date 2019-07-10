@@ -1,4 +1,4 @@
-7d856436a479639afe30088559d1553f *DESCRIPTION
+af751890f384b597815f8f1fa6162313 *DESCRIPTION
 2f1a217f30483e2c899328cc1d498c0f *NAMESPACE
 b2c8d06f94e76a14de83eb72aefecf7c *R/aggregateForBarplot.R
 dc97d7932658d35743abf017394b634f *R/aggregateForHistogram.R
@@ -31,7 +31,7 @@ fe796d0d2b26f235ada92ab0168cde24 *R/isKey.R
 3f2df55524afe9595c4f3a77ac518d56 *R/isSingular.R
 93fad7bcf20c6ea6fb1bd3faf9ad8ce6 *R/isSupported.R
 4be02be13f1c32857ef8c08a9d5c7138 *R/makeCodebook.R
-7ec1d8d9e287b2c45450c571c6fdcad6 *R/makeDataReport.R
+4013088383496faf98a062d91e0e25ee *R/makeDataReport.R
 eb5632cf87da9c6c3fe03ea871001cb8 *R/makeXFunction.R
 1f75b413d099444114c1a48d2c80d8b3 *R/messageGenerator.R
 d912d81638b3c8ec556195c83002aea2 *R/minMax.R
@@ -62,7 +62,7 @@ b9c8d2041043741e9ec1e961f23927e9 *R/variableType.R
 b416f53a05785db91ffb11450b933865 *data/toyData.RData
 f7b8c9322ae31ef70b17c1ac211b2eff *inst/doc/extending_dataMaid.R
 b6f83e27ab8235fe4fef64e508331f82 *inst/doc/extending_dataMaid.Rmd
-e171955cabb339e7bec90c85deaf0178 *inst/doc/extending_dataMaid.html
+f7926505a98220e739d2beed4d4d3911 *inst/doc/extending_dataMaid.html
 921ff68a60d632194deb89a69b241484 *man/allCheckFunctions.Rd
 30cbc2c52cebc0c06a6e5f305939a586 *man/allClasses.Rd
 88980fc64bc706d2fd8a5ee97e46aa45 *man/allSummaryFunctions.Rd
