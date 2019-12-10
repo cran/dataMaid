@@ -1,40 +1,40 @@
-## ----setup, include = FALSE----------------------------------------------
+## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE, eval = TRUE)
 library(dataMaid)
 Sys.setenv(TZ="Europe/Copenhagen")  ## Set time zone to prevent warnings
 Sys.getenv("TZ")
 
-## ----allClasses----------------------------------------------------------
+## ----allClasses---------------------------------------------------------------
 allClasses()
 
-## ----defineCountZeros----------------------------------------------------
+## ----defineCountZeros---------------------------------------------------------
 countZeros <- function(v, ...) {
   val <- length(which(v == 0))
   summaryResult(list(feature = "No. zeros", result = val, value = val))
 }
 
-## ----exampleCountZeros---------------------------------------------------
+## ----exampleCountZeros--------------------------------------------------------
 #Called on a numeric variable
 countZeros(c(rep(0, 5), 1:100))
 
 #Called on a character variable
 countZeros(c(rep(0, 5), letters))
 
-## ----makeCountZerosSumFun------------------------------------------------
+## ----makeCountZerosSumFun-----------------------------------------------------
 countZeros <- summaryFunction(countZeros,
   description = "Count number of zeros",
   classes = c("character", "factor", "integer",
               "labelled", "numeric"))
 
-## ----meanSummaryGeneric--------------------------------------------------
+## ----meanSummaryGeneric-------------------------------------------------------
 meanSummary <- function(v, maxDecimals = 2) {
   UseMethod("meanSummary")
 }
 
-## ----meanSummaryNoMethod, error = TRUE-----------------------------------
+## ----meanSummaryNoMethod, error = TRUE----------------------------------------
 meanSummary(1)
 
-## ----meanSummaryHelperDef------------------------------------------------
+## ----meanSummaryHelperDef-----------------------------------------------------
 meanSummaryHelper <- function(v, maxDecimals) {
   #remove missing observations
   v <- na.omit(v)
@@ -49,7 +49,7 @@ meanSummaryHelper <- function(v, maxDecimals) {
   summaryResult(list(feature = "Mean", result = res, value  = val))
 }
 
-## ----meanSummaryAssignMethods--------------------------------------------
+## ----meanSummaryAssignMethods-------------------------------------------------
 #logical
 meanSummary.logical <- function(v, maxDecimals = 2) {
   meanSummaryHelper(v, maxDecimals)
@@ -65,7 +65,7 @@ meanSummary.integer <- function(v, maxDecimals = 2) {
   meanSummaryHelper(v, maxDecimals)
 }
 
-## ----meanSummaryExample, error = TRUE------------------------------------
+## ----meanSummaryExample, error = TRUE-----------------------------------------
 #called on a numeric variable (supported)
 meanSummary(rnorm(100))
 
@@ -73,14 +73,14 @@ meanSummary(rnorm(100))
 #no method for characters
 meanSummary(letters)
 
-## ----meanSummaryAsSummaryFunction----------------------------------------
+## ----meanSummaryAsSummaryFunction---------------------------------------------
 meanSummary <- summaryFunction(meanSummary,  
                                description = "Compute arithmetic mean")
 
-## ----allSummFunctions, collapse = TRUE-----------------------------------
+## ----allSummFunctions, collapse = TRUE----------------------------------------
 allSummaryFunctions()
 
-## ----mosiacplotExample---------------------------------------------------
+## ----mosiacplotExample--------------------------------------------------------
 #construct a character variable by sampling 100 values that are 
 #either "a" (probability 0.3) or "b" (probability 0.7):
 x <- sample(c("a", "b"), size = 100, replace = TRUE,
@@ -89,7 +89,7 @@ x <- sample(c("a", "b"), size = 100, replace = TRUE,
 #draw a mosaic plot of the distribution:
 mosaicplot(table(x))
 
-## ----defineMosaicVis-----------------------------------------------------
+## ----defineMosaicVis----------------------------------------------------------
 mosaicVisual <- function(v, vnam, doEval) {
   #Define a (unevaluated) call to mosaicplot
   thisCall <- call("mosaicplot", table(v), main = vnam, xlab = "")
@@ -101,10 +101,10 @@ mosaicVisual <- function(v, vnam, doEval) {
   } else return(deparse(thisCall))
 }
 
-## ----exampleMosVis-------------------------------------------------------
+## ----exampleMosVis------------------------------------------------------------
 mosaicVisual(x, "Variable x", doEval = FALSE)
 
-## ----makeMosVisVisFun----------------------------------------------------
+## ----makeMosVisVisFun---------------------------------------------------------
 mosaicVisual <- visualFunction(mosaicVisual,
                                description = "Mosaic plots using graphics",
                                classes = setdiff(allClasses(), 
@@ -112,7 +112,7 @@ mosaicVisual <- visualFunction(mosaicVisual,
                                                    "integer", 
                                                    "Date")))
 
-## ----definePrettierHistHelper--------------------------------------------
+## ----definePrettierHistHelper-------------------------------------------------
 library(ggplot2)
 
 prettierHistHelper <- function(v, vnam) {
@@ -125,10 +125,10 @@ prettierHistHelper <- function(v, vnam) {
   p
 }
 
-## ----prettierHistHelperExample-------------------------------------------
+## ----prettierHistHelperExample------------------------------------------------
 prettierHistHelper(rnorm(100), "Standard normal variable")
 
-## ----definePrettierHist--------------------------------------------------
+## ----definePrettierHist-------------------------------------------------------
 #define visualFunction-style prettierHist()-function
 prettierHist <- function(v, vnam, doEval = TRUE) {
   #define the call
@@ -145,10 +145,10 @@ prettierHist <- visualFunction(prettierHist,
     description = "ggplot2 style histogram with contours",
     classes = c("numeric", "integer", "logical", "Date"))
 
-## ----showAllVisFunc------------------------------------------------------
+## ----showAllVisFunc-----------------------------------------------------------
 allVisualFunctions()
 
-## ----defineIsID----------------------------------------------------------
+## ----defineIsID---------------------------------------------------------------
 isID <- function(v, nMax = NULL, ...) {
   #define minimal output. Note that this is not a
   #proper checkResult
@@ -174,7 +174,7 @@ isID <- function(v, nMax = NULL, ...) {
   out
 }
 
-## ----isIDexample---------------------------------------------------------
+## ----isIDexample--------------------------------------------------------------
 #define 9-character ID variable:
 idVar <- c("1234-1233", "9221-0289",
            "9831-1201", "6722-1243")
@@ -186,7 +186,7 @@ isID(idVar)
 isID(rnorm(10))
 
 
-## ----a1------------------------------------------------------------------
+## ----a1-----------------------------------------------------------------------
 identifyColons <- function(v, nMax = Inf, ... ) {
   #remove duplicates (for speed) and missing values:
   v <- unique(na.omit(v))
@@ -227,26 +227,26 @@ identifyColons <- function(v, nMax = Inf, ... ) {
                    problemValues = problemValues))
 }
 
-## ----identifyColonsIsCheckFunction---------------------------------------
+## ----identifyColonsIsCheckFunction--------------------------------------------
 identifyColons <- checkFunction(identifyColons,
     description = "Identify non-trailing colons",
     classes = c("character", "factor", "labelled"))
 
-## ----identifyColonsPosExample--------------------------------------------
+## ----identifyColonsPosExample-------------------------------------------------
 #define a variable as an interaction between between two factors:
 iaVar <- factor(c("a", "b", "a", "c")):factor(c(1, 2, 3, 4))
 
 #Check iaVar for colons:
 identifyColons(iaVar)
 
-## ----identifyColonsNegExample--------------------------------------------
+## ----identifyColonsNegExample-------------------------------------------------
 identifyColons(letters)
 
-## ----headArtData---------------------------------------------------------
+## ----headArtData--------------------------------------------------------------
 data(artData)
 head(artData, 5)
 
-## ----makeReport, message  = FALSE, warning = FALSE-----------------------
+## ----makeReport, message  = FALSE, warning = FALSE, eval=rmarkdown::pandoc_available()----
 makeDataReport(artData,
   #add extra precheck function         
   preChecks = c("isKey", "isSingular", "isSupported", "isID"),
@@ -287,6 +287,6 @@ makeDataReport(artData,
   open = FALSE
 )
 
-## ----includeReport-------------------------------------------------------
+## ----includeReport, eval=rmarkdown::pandoc_available()------------------------
 htmltools::includeHTML("dataMaid_artData.html")
 
