@@ -4,7 +4,8 @@
 \name{presidentData}
 \alias{presidentData}
 \title{Semi-artificial data about the US presidents}
-\format{A data frame with 46 rows and 11 variables.
+\format{
+A data frame with 46 rows and 11 variables.
 \describe{
    \item{lastName}{A \code{Name} type variable containing the last name of the president.}
    \item{firstName}{A \code{Name} type variable containing the first name of the president.}
@@ -20,10 +21,11 @@
    \item{ageAtInauguration}{A character variable with the age at inauguration.}
    \item{favoriteNumber}{A \code{complex} type variable with a fictional favorite number for
    each president.}
-}}
+}
+}
 \source{
 Artificial dataset constructed based on the US president dataset available from 
-\href{http://www.data-explorer.com/data}{Data Explorer}.
+\href{https://www.data-explorer.com/data/}{Data Explorer}.
 }
 \usage{
 presidentData
@@ -41,6 +43,6 @@ data(presidentData)
 
 }
 \references{
-Petersen AH, Ekstrøm CT (2019). “dataMaid: Your Assistant for Documenting Supervised Data Quality Screening in R.” _Journal of Statistical Software_, *90*(6), 1-38. doi: 10.18637/jss.v090.i06 ( \url{https://doi.org/10.18637/jss.v090.i06}).
+Petersen AH, Ekstrøm CT (2019). “dataMaid: Your Assistant for Documenting Supervised Data Quality Screening in R.” _Journal of Statistical Software_, *90*(6), 1-38. doi: 10.18637/jss.v090.i06 ( \doi{10.18637/jss.v090.i06}).
 }
 \keyword{datasets}

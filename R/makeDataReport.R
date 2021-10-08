@@ -151,7 +151,7 @@
 #' @return The function does not return anything. Its side effect (the production
 #' of a data report) is the reason for running the function.
 #'
-#' @references Petersen AH, Ekstrøm CT (2019). “dataMaid: Your Assistant for Documenting Supervised Data Quality Screening in R.” _Journal of Statistical Software_, *90*(6), 1-38. doi: 10.18637/jss.v090.i06 ( \url{https://doi.org/10.18637/jss.v090.i06}).
+#' @references Petersen AH, Ekstrøm CT (2019). “dataMaid: Your Assistant for Documenting Supervised Data Quality Screening in R.” _Journal of Statistical Software_, *90*(6), 1-38. doi: 10.18637/jss.v090.i06 ( \doi{10.18637/jss.v090.i06}).
 #'
 #' @examples
 #' data(testData)
@@ -303,7 +303,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
             output <- output[1]
             warning("Output argument was wrongfully given as a vector. Only the first entry was used.")
         }
-        if (!(output %in% c("pdf", "html", "word"))) {
+        if (!(output %in% c("pdf", "html", "word", "github"))) {
             output <- NULL
       makeOutputWarning <- TRUE
         } 
@@ -445,6 +445,10 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
     output <- "html"
     outOutput <- "docx"
   }
+#  if (output == "github") {
+#    output <- "html"
+#    outOutput <- "github"
+#  }
   
   if (!render) outOutput <- "Rmd"
   
@@ -648,6 +652,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
       }
       if (output=="html" & !outOutput == "docx") writer("output: html_document")
       if (outOutput=="docx") writer("output: word_document")
+      if (outOutput=="github") writer("output: github_document")
       
     }
     writer("---")
@@ -856,7 +861,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
           printable_name <- gsub("_", "\\\\_", vnam)
           #writer("## **", printable_name, "**\n", outfile = vListConn)
           writer("## ", printable_name, "\n", outfile = vListConn) #** makes linking complicated
-          
+
             ## Fill out name, vClass and missingPct entries in the results overview
             extraLinkCharBegin <- "["
             extraLinkCharEnd <- "]"
@@ -891,7 +896,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
                                                sep=""),
                                          outfile = vListConn)
             
-            ## make Summary table
+	    ## make Summary table
             if (doSummarize) sumTable <- pander::pandoc.table.return(summarize(v,
                                                                          reportstyleOutput = TRUE,
                                                                          summaries = setSummaries(
@@ -910,9 +915,7 @@ makeDataReport <- function(data, output=NULL, render=TRUE,
             
             ## Label information
             ## Right now we are not doing anything besides wirint the label above
-            
-            
-            
+                        
             ## make Visualization
             if (doVisualize) visual <- visualize(v, vnam, doEval=FALSE, 
                                                  visuals = setVisuals(character = characterVisual,

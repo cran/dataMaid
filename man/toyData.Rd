@@ -4,7 +4,8 @@
 \name{toyData}
 \alias{toyData}
 \title{Small example data to show the features of dataMaid}
-\format{A \code{data.frame} with 15 rows and 6 variables.
+\format{
+A \code{data.frame} with 15 rows and 6 variables.
 \describe{
    \item{pill}{A factor variable with two levels (\code{"red"} and \code{"blue"}) and a few
    (correctly coded) missing observations. This represents the colour of a pill.}
@@ -18,7 +19,8 @@
    with a number between 1 and 15), i.e. a key variable.}
    \item{spotifysong}{A factor variable that has the same level (\code{"Irrelevant"}) for all
    observations, i.e. a empty variable. The latest song played on Spotify.}
-}}
+}
+}
 \source{
 Artificial data
 }
@@ -34,6 +36,6 @@ data(toyData)
 
 }
 \references{
-Petersen AH, Ekstrøm CT (2019). “dataMaid: Your Assistant for Documenting Supervised Data Quality Screening in R.” _Journal of Statistical Software_, *90*(6), 1-38. doi: 10.18637/jss.v090.i06 ( \url{https://doi.org/10.18637/jss.v090.i06}).
+Petersen AH, Ekstrøm CT (2019). “dataMaid: Your Assistant for Documenting Supervised Data Quality Screening in R.” _Journal of Statistical Software_, *90*(6), 1-38. doi: 10.18637/jss.v090.i06 ( \doi{10.18637/jss.v090.i06}).
 }
 \keyword{datasets}
